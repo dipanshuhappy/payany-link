@@ -65,6 +65,7 @@ export default function EnsOrAddressPage({ params }: PageProps) {
     key: "com.github",
     chainId: 1,
   });
+  console.log(ensGithub, "github");
 
   const { data: ensWebsite, isLoading: websiteLoading } = useEnsText({
     name: ensNameToUse,
