@@ -36,37 +36,37 @@ export default function EnsOrAddressPage({ params }: PageProps) {
   const isEnsName = decodedParam.includes(".") && !isEthAddress;
 
   // ENS hooks
-  const { data: ensName } = useEnsName({
+  const { data: ensName, isLoading: ensNameLoading } = useEnsName({
     address: isEthAddress ? (decodedParam as `0x${string}`) : undefined,
     chainId: 1,
   });
 
   const ensNameToUse = isEnsName ? decodedParam : ensName || undefined;
 
-  const { data: ensAvatar } = useEnsAvatar({
+  const { data: ensAvatar, isLoading: avatarLoading } = useEnsAvatar({
     name: ensNameToUse,
     chainId: 1,
   });
 
-  const { data: ensDescription } = useEnsText({
+  const { data: ensDescription, isLoading: descriptionLoading } = useEnsText({
     name: ensNameToUse,
     key: "description",
     chainId: 1,
   });
 
-  const { data: ensTwitter } = useEnsText({
+  const { data: ensTwitter, isLoading: twitterLoading } = useEnsText({
     name: ensNameToUse,
     key: "com.twitter",
     chainId: 1,
   });
 
-  const { data: ensGithub } = useEnsText({
+  const { data: ensGithub, isLoading: githubLoading } = useEnsText({
     name: ensNameToUse,
     key: "com.github",
     chainId: 1,
   });
 
-  const { data: ensWebsite } = useEnsText({
+  const { data: ensWebsite, isLoading: websiteLoading } = useEnsText({
     name: ensNameToUse,
     key: "url",
     chainId: 1,
@@ -79,6 +79,22 @@ export default function EnsOrAddressPage({ params }: PageProps) {
 
   const displayName = isEnsName ? decodedParam : ensName || decodedParam;
   const displayAddress = isEthAddress ? decodedParam : undefined;
+
+  // Generate Dicebear avatar for addresses
+  const getDicebearAvatar = (address: string) => {
+    return `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
+  };
+
+  const avatarSrc = isEthAddress
+    ? getDicebearAvatar(decodedParam)
+    : ensAvatar || undefined;
+
+  const isLoadingProfile = isEthAddress
+    ? false // For addresses, we don't need to load ENS data
+    : ensNameLoading || avatarLoading || descriptionLoading;
+  const isLoadingSocials = isEthAddress
+    ? false // For addresses, we don't load social data
+    : twitterLoading || githubLoading || websiteLoading;
 
   const handlePay = () => {
     console.log("Initiating payment to:", displayName);
@@ -120,21 +136,34 @@ export default function EnsOrAddressPage({ params }: PageProps) {
         {/* Header */}
         <div className="text-center mb-8 pt-8">
           <div className="flex flex-col items-center space-y-4">
-            <Avatar className="w-24 h-24">
-              <AvatarImage src={ensAvatar || undefined} alt={displayName} />
-              <AvatarFallback className="text-2xl font-bold">
-                {displayName.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            {isLoadingProfile ? (
+              <Skeleton className="w-24 h-24 rounded-full" />
+            ) : (
+              <Avatar className="w-24 h-24">
+                <AvatarImage src={avatarSrc} alt={displayName} />
+                <AvatarFallback className="text-2xl font-bold">
+                  {displayName.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            )}
 
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                {displayName}
-              </h1>
-              {displayAddress && (
-                <p className="text-sm font-mono text-muted-foreground mt-1">
-                  {displayAddress}
-                </p>
+            <div className="text-center">
+              {isLoadingProfile ? (
+                <>
+                  <Skeleton className="h-9 w-48 mx-auto mb-2" />
+                  {displayAddress && <Skeleton className="h-5 w-64 mx-auto" />}
+                </>
+              ) : (
+                <>
+                  <h1 className="text-3xl font-bold text-foreground">
+                    {displayName}
+                  </h1>
+                  {displayAddress && (
+                    <p className="text-sm font-mono text-muted-foreground mt-1">
+                      {displayAddress}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -143,77 +172,110 @@ export default function EnsOrAddressPage({ params }: PageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Profile Information */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Description */}
-            {ensDescription && (
-              <Card className="p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-3">
-                  About
-                </h2>
-                <p className="text-muted-foreground">{ensDescription}</p>
-              </Card>
-            )}
+            {/* Description - Only show for ENS names */}
+            {!isEthAddress &&
+              (descriptionLoading ? (
+                <Card className="p-6">
+                  <h2 className="text-lg font-semibold text-foreground mb-3">
+                    About
+                  </h2>
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                </Card>
+              ) : (
+                ensDescription && (
+                  <Card className="p-6">
+                    <h2 className="text-lg font-semibold text-foreground mb-3">
+                      About
+                    </h2>
+                    <p className="text-muted-foreground">{ensDescription}</p>
+                  </Card>
+                )
+              ))}
 
-            {/* Social Links */}
-            {(ensTwitter || ensGithub || ensWebsite) && (
-              <Card className="p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">
-                  Links
-                </h2>
-                <div className="space-y-3">
-                  {ensWebsite && (
+            {/* Social Links - Only show for ENS names */}
+            {!isEthAddress &&
+              (isLoadingSocials ? (
+                <Card className="p-6">
+                  <h2 className="text-lg font-semibold text-foreground mb-4">
+                    Links
+                  </h2>
+                  <div className="space-y-3">
                     <div className="flex items-center space-x-3">
-                      <Badge variant="outline">Website</Badge>
-                      <a
-                        href={
-                          ensWebsite.startsWith("http")
-                            ? ensWebsite
-                            : `https://${ensWebsite}`
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline flex items-center space-x-1"
-                      >
-                        <span>{ensWebsite}</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
+                      <Skeleton className="w-16 h-6" />
+                      <Skeleton className="w-32 h-4" />
                     </div>
-                  )}
-                  {ensTwitter && (
                     <div className="flex items-center space-x-3">
-                      <Badge variant="outline">Twitter</Badge>
-                      <a
-                        href={`https://twitter.com/${ensTwitter}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline flex items-center space-x-1"
-                      >
-                        <span>@{ensTwitter}</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
+                      <Skeleton className="w-16 h-6" />
+                      <Skeleton className="w-32 h-4" />
                     </div>
-                  )}
-                  {ensGithub && (
-                    <div className="flex items-center space-x-3">
-                      <Badge variant="outline">GitHub</Badge>
-                      <a
-                        href={`https://github.com/${ensGithub}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline flex items-center space-x-1"
-                      >
-                        <span>{ensGithub}</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
+                  </div>
+                </Card>
+              ) : (
+                (ensTwitter || ensGithub || ensWebsite) && (
+                  <Card className="p-6">
+                    <h2 className="text-lg font-semibold text-foreground mb-4">
+                      Links
+                    </h2>
+                    <div className="space-y-3">
+                      {ensWebsite && (
+                        <div className="flex items-center space-x-3">
+                          <Badge variant="outline">Website</Badge>
+                          <a
+                            href={
+                              ensWebsite.startsWith("http")
+                                ? ensWebsite
+                                : `https://${ensWebsite}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline flex items-center space-x-1"
+                          >
+                            <span>{ensWebsite}</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      )}
+                      {ensTwitter && (
+                        <div className="flex items-center space-x-3">
+                          <Badge variant="outline">Twitter</Badge>
+                          <a
+                            href={`https://twitter.com/${ensTwitter}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline flex items-center space-x-1"
+                          >
+                            <span>@{ensTwitter}</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      )}
+                      {ensGithub && (
+                        <div className="flex items-center space-x-3">
+                          <Badge variant="outline">GitHub</Badge>
+                          <a
+                            href={`https://github.com/${ensGithub}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline flex items-center space-x-1"
+                          >
+                            <span>{ensGithub}</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </Card>
-            )}
+                  </Card>
+                )
+              ))}
 
             {/* Addresses */}
             <Card className="p-6">
               <h2 className="text-lg font-semibold text-foreground mb-4">
-                Addresses
+                {isEthAddress ? "Address" : "Addresses"}
               </h2>
               {addressesLoading ? (
                 <div className="space-y-3">
@@ -224,24 +286,34 @@ export default function EnsOrAddressPage({ params }: PageProps) {
                     </div>
                   ))}
                 </div>
-              ) : allAddresses && allAddresses.length > 0 ? (
+              ) : (
                 <div className="space-y-3">
-                  {/* Always show Ethereum address first */}
-                  {displayAddress && (
-                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  {/* Show Ethereum address for both scenarios */}
+                  {(isEthAddress || displayAddress) && (
+                    <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary/20">
                       <div className="flex items-center space-x-3 flex-1 min-w-0">
-                        <Badge variant="secondary">Ethereum</Badge>
+                        <Badge
+                          variant="default"
+                          className="bg-primary text-primary-foreground"
+                        >
+                          Ethereum
+                        </Badge>
                         <span className="font-mono text-sm text-foreground truncate">
-                          {displayAddress}
+                          {isEthAddress ? decodedParam : displayAddress}
                         </span>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => copyToClipboard(displayAddress)}
-                        className="ml-2 shrink-0"
+                        onClick={() =>
+                          copyToClipboard(
+                            isEthAddress ? decodedParam : displayAddress || "",
+                          )
+                        }
+                        className="ml-2 shrink-0 hover:bg-primary/20"
                       >
-                        {copiedAddress === displayAddress ? (
+                        {copiedAddress ===
+                        (isEthAddress ? decodedParam : displayAddress) ? (
                           <Check className="w-4 h-4 text-green-500" />
                         ) : (
                           <Copy className="w-4 h-4" />
@@ -250,36 +322,44 @@ export default function EnsOrAddressPage({ params }: PageProps) {
                     </div>
                   )}
 
-                  {allAddresses.map(({ network, address }) => (
-                    <div
-                      key={network}
-                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                    >
-                      <div className="flex items-center space-x-3 flex-1 min-w-0">
-                        <Badge variant="secondary">{network}</Badge>
-                        <span className="font-mono text-sm text-foreground truncate">
-                          {address}
+                  {/* Show additional addresses for ENS names */}
+                  {!isEthAddress && allAddresses && allAddresses.length > 0 && (
+                    <>
+                      <div className="flex items-center space-x-2 mt-4 mb-2">
+                        <div className="h-px bg-border flex-1" />
+                        <span className="text-xs text-muted-foreground px-2">
+                          Multi-chain Addresses
                         </span>
+                        <div className="h-px bg-border flex-1" />
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => copyToClipboard(address || "")}
-                        className="ml-2 shrink-0"
-                      >
-                        {copiedAddress === address ? (
-                          <Check className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </Button>
-                    </div>
-                  ))}
+                      {allAddresses.map(({ network, address }) => (
+                        <div
+                          key={network}
+                          className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                        >
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <Badge variant="outline">{network}</Badge>
+                            <span className="font-mono text-sm text-foreground truncate">
+                              {address}
+                            </span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(address || "")}
+                            className="ml-2 shrink-0"
+                          >
+                            {copiedAddress === address ? (
+                              <Check className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
-              ) : (
-                <p className="text-muted-foreground">
-                  No additional addresses found.
-                </p>
               )}
             </Card>
           </div>

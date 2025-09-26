@@ -5,6 +5,7 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
+import { Toaster } from "@workspace/ui/components/sonner";
 import { config } from "@/lib/wagmi";
 const queryClient = new QueryClient();
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -18,7 +19,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     >
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
-          <RainbowKitProvider> {children}</RainbowKitProvider>
+          <RainbowKitProvider>
+            {children}
+            <Toaster />
+          </RainbowKitProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </NextThemesProvider>
