@@ -1,5 +1,6 @@
 "use client";
-
+"4c45c2ee-0be4-440b-a0e5-38ddf0fb19e6.7044c53d-24e1-47ee-a7c6-0ebdbe675364";
+"payany-link";
 import React from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
@@ -19,6 +20,7 @@ import { isAddress } from "viem";
 import { useState } from "react";
 import { Copy, Check, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import PaymentModal from "@/components/PaymentModal";
 
 interface PageProps {
   params: {
@@ -30,6 +32,7 @@ export default function EnsOrAddressPage({ params }: PageProps) {
   const { ens_or_address } = params;
   const decodedParam = decodeURIComponent(ens_or_address);
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   // Check if it's an address or ENS name
   const isEthAddress = isAddress(decodedParam);
@@ -97,8 +100,7 @@ export default function EnsOrAddressPage({ params }: PageProps) {
     : twitterLoading || githubLoading || websiteLoading;
 
   const handlePay = () => {
-    console.log("Initiating payment to:", displayName);
-    // Payment logic will be implemented here
+    setIsPaymentModalOpen(true);
   };
 
   const copyToClipboard = async (text: string) => {
@@ -407,6 +409,13 @@ export default function EnsOrAddressPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        recipient={displayName}
+        recipientAddress={isEthAddress ? decodedParam : displayAddress}
+      />
     </div>
   );
 }
