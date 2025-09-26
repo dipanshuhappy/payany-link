@@ -1,9 +1,11 @@
+"use client";
 import React from "react";
 import { Button } from "@workspace/ui/components/button";
 import CardNav, { CardNavItem } from "@/components/CardNav";
 import Silk from "@/components/Silk";
 import { createLogoDataUrl } from "@/components/Logo";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { DynamicSuffixSearchBar } from "@/components/DynamicSuffixSearchBar";
 
 const cardNavItems: CardNavItem[] = [
   {
@@ -129,14 +131,12 @@ export default function Page() {
             </div>
 
             {/* CTA Button */}
-            <div className="flex justify-center">
-              <Button
-                size="lg"
-                className="text-lg px-12 py-6 bg-white text-black hover:bg-gray-100 font-bold shadow-2xl transition-all duration-300 transform hover:scale-105 rounded-xl"
-              >
-                Start Now
-              </Button>
-            </div>
+            <DynamicSuffixSearchBar
+              placeholderNames={["vitalik.eth", "jesse.base.eth"]}
+              suffix={".payany.link"}
+              buttonText="Pay"
+              onPay={() => {}}
+            />
 
             {/* Additional Info */}
             <div className="mt-8 text-sm text-white/70">
