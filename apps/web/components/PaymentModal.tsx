@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,10 +8,19 @@ import {
   DialogTitle,
 } from "@workspace/ui/components/dialog";
 import { Button } from "@workspace/ui/components/button";
-import { ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { Badge } from "@workspace/ui/components/badge";
+import { ChevronLeft, ChevronRight, Check, Loader2 } from "lucide-react";
 import ChainSelection, { CHAINS, Chain } from "./ChainSelection";
 import TokenSelection, { TOKENS, Token } from "./TokenSelection";
 import PaymentConfirmation from "./PaymentConfirmation";
+import {
+  useLifiQuote,
+  useLifiExecution,
+  useLifiTokens,
+} from "@/hooks/use-lifi";
+import { useAccount, useBalance } from "wagmi";
+import { formatUnits, parseUnits } from "viem";
+import { toast } from "sonner";
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -30,6 +39,49 @@ export default function PaymentModal({
   const [selectedChain, setSelectedChain] = useState<Chain | null>(null);
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const [amount, setAmount] = useState("");
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  const { address, chainId: currentChainId } = useAccount();
+
+  // Get tokens for selected chain using LI.FI
+  const { tokens: lifiTokens, isLoading: tokensLoading } = useLifiTokens(
+    selectedChain?.id,
+  );
+
+  // Get cross-chain route quote
+  const { routes, isLoading: routesLoading } = useLifiQuote({
+    fromChainId: currentChainId,
+    toChainId: selectedChain?.id,
+    fromTokenAddress:
+      selectedToken?.address === "native"
+        ? "0x0000000000000000000000000000000000000000"
+        : selectedToken?.address,
+    toTokenAddress:
+      selectedToken?.address === "native"
+        ? "0x0000000000000000000000000000000000000000"
+        : selectedToken?.address,
+    fromAmount: amount
+      ? parseUnits(amount, selectedToken?.decimals || 18).toString()
+      : undefined,
+  });
+
+  // LI.FI execution
+  const {
+    execute,
+    isExecuting,
+    executionStatus,
+    error: executionError,
+  } = useLifiExecution();
+
+  // Get user's balance for selected token
+  const { data: balance } = useBalance({
+    address,
+    token:
+      selectedToken?.address === "native"
+        ? undefined
+        : (selectedToken?.address as `0x${string}`),
+    chainId: currentChainId,
+  });
 
   const handleNext = () => {
     if (currentStep < 3) {
@@ -51,17 +103,64 @@ export default function PaymentModal({
     onClose();
   };
 
-  const handleConfirm = () => {
-    // Handle payment confirmation logic here
-    console.log("Payment confirmed:", {
-      chain: selectedChain,
-      token: selectedToken,
-      amount,
-      recipient,
-      recipientAddress,
-    });
-    handleClose();
+  const handleConfirm = async () => {
+    if (!routes.length || !selectedChain || !selectedToken || !amount) {
+      toast.error("Please complete all payment details");
+      return;
+    }
+
+    setIsProcessingPayment(true);
+
+    try {
+      // Use the best route (first one is usually recommended)
+      const bestRoute = routes[0];
+      if (!bestRoute) {
+        throw new Error("No route available");
+      }
+
+      // Execute the LI.FI route
+      await execute(bestRoute);
+
+      toast.success("Payment sent successfully!");
+      handleClose();
+    } catch (error) {
+      console.error("Payment failed:", error);
+      toast.error(
+        `Payment failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
+
+  // Update tokens when chain changes
+  useEffect(() => {
+    if (selectedChain && lifiTokens.length > 0) {
+      // Merge LI.FI tokens with static tokens for better coverage
+      const chainTokens = TOKENS[selectedChain.id] || [];
+      const mergedTokens = [...chainTokens];
+
+      // Add LI.FI tokens that aren't already in our static list
+      lifiTokens.forEach((lifiToken) => {
+        const exists = chainTokens.some(
+          (token) =>
+            token.address.toLowerCase() === lifiToken.address.toLowerCase(),
+        );
+        if (!exists) {
+          mergedTokens.push({
+            address: lifiToken.address,
+            symbol: lifiToken.symbol,
+            name: lifiToken.name,
+            decimals: lifiToken.decimals,
+            logo:
+              lifiToken.logoURI ||
+              `https://cryptologos.cc/logos/${lifiToken.symbol.toLowerCase()}-logo.svg`,
+            balance: "0.00", // We'll get real balance separately
+          });
+        }
+      });
+    }
+  }, [selectedChain, lifiTokens]);
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center space-x-2 sm:space-x-4 mb-6">
@@ -128,14 +227,91 @@ export default function PaymentModal({
               />
             )}
             {currentStep === 3 && (
-              <PaymentConfirmation
-                recipient={recipient}
-                recipientAddress={recipientAddress}
-                selectedChain={selectedChain}
-                selectedToken={selectedToken}
-                amount={amount}
-                onAmountChange={setAmount}
-              />
+              <div className="space-y-6">
+                <PaymentConfirmation
+                  recipient={recipient}
+                  recipientAddress={recipientAddress}
+                  selectedChain={selectedChain}
+                  selectedToken={selectedToken}
+                  amount={amount}
+                  onAmountChange={setAmount}
+                />
+
+                {/* LI.FI Route Information */}
+                {routesLoading && (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    <span className="text-sm text-muted-foreground">
+                      Finding best route...
+                    </span>
+                  </div>
+                )}
+
+                {routes.length > 0 && !routesLoading && (
+                  <div className="bg-muted/30 rounded-lg p-4">
+                    <h4 className="font-medium mb-2 flex items-center">
+                      <span>Cross-chain Route</span>
+                      <Badge variant="secondary" className="ml-2">
+                        LI.FI
+                      </Badge>
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          Estimated time:
+                        </span>
+                        <span>
+                          {Math.ceil(
+                            (routes[0]?.steps.reduce(
+                              (sum, step) =>
+                                sum + (step.estimate?.executionDuration || 0),
+                              0,
+                            ) || 0) / 60,
+                          )}{" "}
+                          minutes
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Gas cost:</span>
+                        <span>${routes[0]?.gasCostUSD || "0.00"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          You will receive:
+                        </span>
+                        <span className="font-medium">
+                          {routes[0] &&
+                            formatUnits(
+                              BigInt(routes[0].toAmount),
+                              selectedToken?.decimals || 18,
+                            )}{" "}
+                          {selectedToken?.symbol}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {currentChainId !== selectedChain?.id &&
+                  !routesLoading &&
+                  routes.length === 0 &&
+                  amount && (
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                      <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                        Cross-chain payment required. Please ensure you have
+                        sufficient balance and gas fees.
+                      </p>
+                    </div>
+                  )}
+
+                {executionStatus && (
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      Transaction status: {executionStatus || "Processing..."}
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -154,12 +330,23 @@ export default function PaymentModal({
               disabled={
                 (currentStep === 1 && !selectedChain) ||
                 (currentStep === 2 && !selectedToken) ||
-                (currentStep === 3 && !amount)
+                (currentStep === 3 && (!amount || routesLoading)) ||
+                isProcessingPayment ||
+                isExecuting
               }
               className="bg-primary hover:bg-primary/90"
             >
-              {currentStep === 3 ? "Confirm Payment" : "Next"}
-              {currentStep < 3 && <ChevronRight className="w-4 h-4 ml-2" />}
+              {isProcessingPayment || isExecuting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  {currentStep === 3 ? "Confirm Payment" : "Next"}
+                  {currentStep < 3 && <ChevronRight className="w-4 h-4 ml-2" />}
+                </>
+              )}
             </Button>
           </div>
         </div>
