@@ -26,6 +26,9 @@ interface PaymentModalProps {
   onClose: () => void;
   recipient: string;
   recipientAddress?: string;
+  mode?: "pay" | "buy";
+  fixedAmount?: string;
+  productName?: string;
 }
 
 export default function PaymentModal({
@@ -33,12 +36,15 @@ export default function PaymentModal({
   onClose,
   recipient,
   recipientAddress,
+  mode = "pay",
+  fixedAmount,
+  productName,
 }: PaymentModalProps) {
   console.log({ recipientAddress });
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedChain, setSelectedChain] = useState<Chain | null>(null);
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(fixedAmount || "");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const { address, chainId: currentChainId } = useAccount();
@@ -76,7 +82,9 @@ export default function PaymentModal({
     setCurrentStep(1);
     setSelectedChain(null);
     setSelectedToken(null);
-    setAmount("");
+    if (mode === "pay") {
+      setAmount("");
+    }
     onClose();
   };
 
@@ -129,13 +137,24 @@ export default function PaymentModal({
     }
   }, [selectedChain]);
 
+  // Set fixed amount when in buy mode
+  useEffect(() => {
+    if (mode === "buy" && fixedAmount) {
+      setAmount(fixedAmount);
+    }
+  }, [mode, fixedAmount]);
+
   // Show connect wallet message if not connected
   if (!address) {
     return (
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent className="sm:max-w-lg max-w-[95vw]">
           <DialogHeader>
-            <DialogTitle className="text-center">Send Payment</DialogTitle>
+            <DialogTitle className="text-center">
+              {mode === "buy"
+                ? `Buy ${productName || "Product"}`
+                : "Send Payment"}
+            </DialogTitle>
           </DialogHeader>
           <div className="py-8 text-center">
             <p className="text-muted-foreground mb-4">
@@ -204,7 +223,11 @@ export default function PaymentModal({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg max-w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-center">Send Payment</DialogTitle>
+          <DialogTitle className="text-center">
+            {mode === "buy"
+              ? `Buy ${productName || "Product"}`
+              : "Send Payment"}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="py-4">
@@ -236,7 +259,8 @@ export default function PaymentModal({
                   selectedChain={selectedChain}
                   selectedToken={selectedToken}
                   amount={amount}
-                  onAmountChange={setAmount}
+                  onAmountChange={mode === "pay" ? setAmount : undefined}
+                  isAmountEditable={mode === "pay"}
                 />
 
                 <div className="bg-muted/30 rounded-lg p-4">

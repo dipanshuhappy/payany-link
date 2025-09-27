@@ -16,7 +16,9 @@ export const grantProductAccess = mutation({
     // Check if access already exists for this transaction
     const existingAccess = await ctx.db
       .query("product_access")
-      .withIndex("by_transaction", (q) => q.eq("transaction_hash", args.transaction_hash))
+      .withIndex("by_transaction", (q) =>
+        q.eq("transaction_hash", args.transaction_hash),
+      )
       .first();
 
     if (existingAccess) {
@@ -139,16 +141,22 @@ export const generateDownloadLink = action({
     product_id: v.string(),
     buyer_address: v.string(),
   },
-  handler: async (ctx, args): Promise<{
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
     success: boolean;
     downloadUrl?: string;
     error?: string;
   }> => {
     // Verify access
-    const accessCheck = await ctx.runQuery(api.productAccess.verifyProductAccess, {
-      product_id: args.product_id,
-      buyer_address: args.buyer_address,
-    });
+    const accessCheck = await ctx.runQuery(
+      api.productAccess.verifyProductAccess,
+      {
+        product_id: args.product_id,
+        buyer_address: args.buyer_address,
+      },
+    );
 
     if (!accessCheck.hasAccess) {
       return {
@@ -201,12 +209,15 @@ export const updateStoreSettings = mutation({
     store_enabled: v.optional(v.boolean()),
     accepted_tokens: v.optional(v.array(v.string())),
     store_description: v.optional(v.string()),
-    social_links: v.optional(v.object({
-      twitter: v.optional(v.string()),
-      discord: v.optional(v.string()),
-      telegram: v.optional(v.string()),
-    })),
+    social_links: v.optional(
+      v.object({
+        twitter: v.optional(v.string()),
+        discord: v.optional(v.string()),
+        telegram: v.optional(v.string()),
+      }),
+    ),
     theme_color: v.optional(v.string()),
+    isFiatEnabled: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const { owner_address, ...updateData } = args;
@@ -228,5 +239,23 @@ export const updateStoreSettings = mutation({
       });
       return { success: true, settingsId };
     }
+  },
+});
+
+// Check if fiat payments are enabled for an owner
+export const isFiatEnabled = query({
+  args: {
+    owner_address: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const storeSettings = await ctx.db
+      .query("store_settings")
+      .withIndex("by_owner", (q) => q.eq("owner_address", args.owner_address))
+      .first();
+
+    return {
+      enabled: storeSettings?.isFiatEnabled ?? false,
+      hasSettings: !!storeSettings,
+    };
   },
 });

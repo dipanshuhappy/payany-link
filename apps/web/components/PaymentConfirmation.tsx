@@ -12,7 +12,8 @@ interface PaymentConfirmationProps {
   selectedChain: Chain | null;
   selectedToken: Token | null;
   amount: string;
-  onAmountChange: (amount: string) => void;
+  onAmountChange?: (amount: string) => void;
+  isAmountEditable?: boolean;
 }
 
 export default function PaymentConfirmation({
@@ -22,6 +23,7 @@ export default function PaymentConfirmation({
   selectedToken,
   amount,
   onAmountChange,
+  isAmountEditable = true,
 }: PaymentConfirmationProps) {
   return (
     <div className="space-y-6">
@@ -64,13 +66,19 @@ export default function PaymentConfirmation({
         <div className="space-y-3">
           <label className="text-sm font-medium">Amount</label>
           <div className="flex items-center space-x-2">
-            <input
-              type="number"
-              placeholder="0.00"
-              value={amount}
-              onChange={(e) => onAmountChange(e.target.value)}
-              className="flex-1 px-4 py-3 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+            {isAmountEditable ? (
+              <input
+                type="number"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => onAmountChange?.(e.target.value)}
+                className="flex-1 px-4 py-3 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            ) : (
+              <div className="flex-1 px-4 py-3 border rounded-lg bg-muted/50 text-foreground font-medium">
+                {amount || "0.00"}
+              </div>
+            )}
             <Badge variant="outline">{selectedToken?.symbol}</Badge>
           </div>
           <p className="text-xs text-muted-foreground">

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
@@ -10,6 +10,7 @@ import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
 import { AddProductButton } from "./ProductForm";
+import PaymentModal from "./PaymentModal";
 
 interface StoreSectionProps {
   ownerAddress: string;
@@ -17,24 +18,34 @@ interface StoreSectionProps {
   ownerEns?: string;
 }
 
-export function StoreSection({ ownerAddress, displayName, ownerEns }: StoreSectionProps) {
+export function StoreSection({
+  ownerAddress,
+  displayName,
+  ownerEns,
+}: StoreSectionProps) {
   const { address } = useAccount();
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
   // Query products for this address
   const products = useQuery(
     api.products.getProductsByOwner,
-    ownerAddress ? {
-      owner_address: ownerAddress,
-      activeOnly: true,
-    } : "skip"
+    ownerAddress
+      ? {
+          owner_address: ownerAddress,
+          activeOnly: true,
+        }
+      : "skip",
   );
 
   // Query store settings
   const storeSettings = useQuery(
     api.productAccess.getStoreSettings,
-    ownerAddress ? {
-      owner_address: ownerAddress,
-    } : "skip"
+    ownerAddress
+      ? {
+          owner_address: ownerAddress,
+        }
+      : "skip",
   );
 
   const handleProductCreated = () => {
@@ -46,7 +57,6 @@ export function StoreSection({ ownerAddress, displayName, ownerEns }: StoreSecti
 
   // Show empty state for owners, nothing for non-owners
   if (!products || products.length === 0) {
-
     if (!isOwner) {
       return null; // Don't show anything to non-owners when no products
     }
@@ -58,7 +68,9 @@ export function StoreSection({ ownerAddress, displayName, ownerEns }: StoreSecti
             <Package className="w-6 h-6 text-primary" />
           </div>
           <div className="space-y-2">
-            <h3 className="text-xl font-semibold text-foreground">No products yet</h3>
+            <h3 className="text-xl font-semibold text-foreground">
+              No products yet
+            </h3>
             <p className="text-muted-foreground text-sm leading-relaxed">
               Start building your store by creating your first product
             </p>
@@ -74,8 +86,8 @@ export function StoreSection({ ownerAddress, displayName, ownerEns }: StoreSecti
   }
 
   const handleProductPurchase = (product: any) => {
-    // TODO: Implement actual purchase logic
-    toast.success("Product purchase coming soon!");
+    setSelectedProduct(product);
+    setIsPaymentModalOpen(true);
   };
 
   return (
@@ -83,7 +95,9 @@ export function StoreSection({ ownerAddress, displayName, ownerEns }: StoreSecti
       <div className="flex items-start justify-between mb-6">
         <div className="flex-1">
           <h2 className="text-xl font-semibold text-foreground mb-1">
-            {storeSettings?.store_description ? `${displayName}'s Store` : "Products"}
+            {storeSettings?.store_description
+              ? `${displayName}'s Store`
+              : "Products"}
           </h2>
           {storeSettings?.store_description && (
             <p className="text-muted-foreground text-sm">
@@ -123,7 +137,9 @@ export function StoreSection({ ownerAddress, displayName, ownerEns }: StoreSecti
 
             {/* Product header */}
             <div className="flex items-start justify-between gap-2 mb-2">
-              <h3 className="font-semibold text-foreground text-lg leading-tight">{product.name}</h3>
+              <h3 className="font-semibold text-foreground text-lg leading-tight">
+                {product.name}
+              </h3>
               {product.featured && (
                 <Badge className="bg-primary/10 text-primary border-primary/20 text-xs font-medium shrink-0">
                   Featured
@@ -153,7 +169,8 @@ export function StoreSection({ ownerAddress, displayName, ownerEns }: StoreSecti
                   {product.currency}
                 </span>
               </div>
-              {(product.sold_count && product.sold_count > 0) || (product.max_supply && product.max_supply > 0) ? (
+              {(product.sold_count && product.sold_count > 0) ||
+              (product.max_supply && product.max_supply > 0) ? (
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   {product.sold_count && product.sold_count > 0 && (
                     <span>{product.sold_count} sold</span>
@@ -187,13 +204,18 @@ export function StoreSection({ ownerAddress, displayName, ownerEns }: StoreSecti
             {product.prices && Object.keys(product.prices).length > 0 && (
               <div className="mb-4">
                 <div className="flex flex-wrap gap-1">
-                  {Object.entries(product.prices).map(([currency, price]) => (
-                    price && (
-                      <Badge key={currency} variant="secondary" className="text-xs">
-                        {price} {currency.toUpperCase()}
-                      </Badge>
-                    )
-                  ))}
+                  {Object.entries(product.prices).map(
+                    ([currency, price]) =>
+                      price && (
+                        <Badge
+                          key={currency}
+                          variant="secondary"
+                          className="text-xs"
+                        >
+                          {price} {currency.toUpperCase()}
+                        </Badge>
+                      ),
+                  )}
                 </div>
               </div>
             )}
@@ -203,11 +225,14 @@ export function StoreSection({ ownerAddress, displayName, ownerEns }: StoreSecti
               onClick={() => handleProductPurchase(product)}
               className="w-full rounded-full bg-foreground text-background hover:opacity-90 font-medium py-2.5"
               disabled={
-                !!(product.max_supply &&
-                (product.sold_count || 0) >= product.max_supply)
+                !!(
+                  product.max_supply &&
+                  (product.sold_count || 0) >= product.max_supply
+                )
               }
             >
-              {product.max_supply && (product.sold_count || 0) >= product.max_supply
+              {product.max_supply &&
+              (product.sold_count || 0) >= product.max_supply
                 ? "Sold Out"
                 : "Buy Now"}
             </Button>
@@ -262,16 +287,37 @@ export function StoreSection({ ownerAddress, displayName, ownerEns }: StoreSecti
         <div className="mt-6 pt-6 border-t border-border/50">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span className="font-medium">
-              Accepts: {storeSettings.accepted_tokens?.join(", ") || "ETH, USDC"}
+              Accepts:{" "}
+              {storeSettings.accepted_tokens?.join(", ") || "ETH, USDC"}
             </span>
-            {products.reduce((total, product) => total + (product.sold_count || 0), 0) > 0 && (
+            {products.reduce(
+              (total, product) => total + (product.sold_count || 0),
+              0,
+            ) > 0 && (
               <span className="font-medium">
-                Total sales: {products.reduce((total, product) => total + (product.sold_count || 0), 0)}
+                Total sales:{" "}
+                {products.reduce(
+                  (total, product) => total + (product.sold_count || 0),
+                  0,
+                )}
               </span>
             )}
           </div>
         </div>
       )}
+
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => {
+          setIsPaymentModalOpen(false);
+          setSelectedProduct(null);
+        }}
+        recipient={displayName}
+        recipientAddress={ownerAddress}
+        mode="buy"
+        fixedAmount={selectedProduct?.price?.toString()}
+        productName={selectedProduct?.name}
+      />
     </Card>
   );
 }

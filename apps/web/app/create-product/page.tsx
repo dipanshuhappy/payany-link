@@ -23,7 +23,7 @@ import {
   Eye,
   Loader2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -54,15 +54,9 @@ export default function CreateProductPage() {
     name: "",
     description: "",
     price: "",
-    currency: "ETH",
+    currency: "PYUSD",
     product_type: "digital_download" as const,
     max_supply: "",
-    // Multi-chain pricing
-    eth_price: "",
-    usdc_price: "",
-    matic_price: "",
-    sol_price: "",
-    btc_price: "",
   });
 
   const [uploads, setUploads] = useState<{
@@ -76,7 +70,7 @@ export default function CreateProductPage() {
   // File upload handler
   const uploadFile = async (
     file: File,
-    purpose: "product_image" | "product_file" | "preview_file"
+    purpose: "product_image" | "product_file" | "preview_file",
   ): Promise<{ storageId: string; url: string }> => {
     const uploadUrl = await generateUploadUrl();
 
@@ -93,7 +87,7 @@ export default function CreateProductPage() {
       filename: file.name,
       fileType: file.type,
       fileSize: file.size,
-      uploadedBy: ownerAddress,
+      uploadedBy: ownerAddress || "",
       purpose,
     });
 
@@ -101,81 +95,87 @@ export default function CreateProductPage() {
   };
 
   // Image upload dropzone
-  const onImageDrop = useCallback(async (acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (!file) return;
+  const onImageDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      const file = acceptedFiles[0];
+      if (!file) return;
 
-    const fileUpload: FileUpload = {
-      file,
-      progress: 0,
-      status: "uploading",
-    };
+      const fileUpload: FileUpload = {
+        file,
+        progress: 0,
+        status: "uploading",
+      };
 
-    setUploads(prev => ({ ...prev, image: fileUpload }));
+      setUploads((prev) => ({ ...prev, image: fileUpload }));
 
-    try {
-      const result = await uploadFile(file, "product_image");
-      setUploads(prev => ({
-        ...prev,
-        image: {
-          ...fileUpload,
-          progress: 100,
-          status: "completed",
-          storageId: result.storageId,
-          url: result.url,
-        },
-      }));
-      toast.success("Image uploaded successfully!");
-    } catch (error) {
-      console.error("Image upload failed:", error);
-      setUploads(prev => ({
-        ...prev,
-        image: { ...fileUpload, status: "error" },
-      }));
-      toast.error("Image upload failed");
-    }
-  }, [ownerAddress]);
+      try {
+        const result = await uploadFile(file, "product_image");
+        setUploads((prev) => ({
+          ...prev,
+          image: {
+            ...fileUpload,
+            progress: 100,
+            status: "completed",
+            storageId: result.storageId,
+            url: result.url,
+          },
+        }));
+        toast.success("Image uploaded successfully!");
+      } catch (error) {
+        console.error("Image upload failed:", error);
+        setUploads((prev) => ({
+          ...prev,
+          image: { ...fileUpload, status: "error" },
+        }));
+        toast.error("Image upload failed");
+      }
+    },
+    [ownerAddress],
+  );
 
   // Product file upload dropzone
-  const onProductFileDrop = useCallback(async (acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (!file) return;
+  const onProductFileDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      const file = acceptedFiles[0];
+      if (!file) return;
 
-    const fileUpload: FileUpload = {
-      file,
-      progress: 0,
-      status: "uploading",
-    };
+      const fileUpload: FileUpload = {
+        file,
+        progress: 0,
+        status: "uploading",
+      };
 
-    setUploads(prev => ({ ...prev, productFile: fileUpload }));
+      setUploads((prev) => ({ ...prev, productFile: fileUpload }));
 
-    try {
-      const result = await uploadFile(file, "product_file");
-      setUploads(prev => ({
-        ...prev,
-        productFile: {
-          ...fileUpload,
-          progress: 100,
-          status: "completed",
-          storageId: result.storageId,
-          url: result.url,
-        },
-      }));
-      toast.success("Product file uploaded successfully!");
-    } catch (error) {
-      console.error("Product file upload failed:", error);
-      setUploads(prev => ({
-        ...prev,
-        productFile: { ...fileUpload, status: "error" },
-      }));
-      toast.error("Product file upload failed");
-    }
-  }, [ownerAddress]);
+      try {
+        const result = await uploadFile(file, "product_file");
+        setUploads((prev) => ({
+          ...prev,
+          productFile: {
+            ...fileUpload,
+            progress: 100,
+            status: "completed",
+            storageId: result.storageId,
+            url: result.url,
+          },
+        }));
+        toast.success("Product file uploaded successfully!");
+      } catch (error) {
+        console.error("Product file upload failed:", error);
+        setUploads((prev) => ({
+          ...prev,
+          productFile: { ...fileUpload, status: "error" },
+        }));
+        toast.error("Product file upload failed");
+      }
+    },
+    [ownerAddress],
+  );
 
   const imageDropzone = useDropzone({
     onDrop: onImageDrop,
     accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp']
+      "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"],
     },
     maxFiles: 1,
     maxSize: 5 * 1024 * 1024, // 5MB
@@ -184,11 +184,11 @@ export default function CreateProductPage() {
   const productFileDropzone = useDropzone({
     onDrop: onProductFileDrop,
     accept: {
-      'application/pdf': ['.pdf'],
-      'application/zip': ['.zip'],
-      'application/x-zip-compressed': ['.zip'],
-      'text/*': ['.txt', '.md'],
-      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
+      "application/pdf": [".pdf"],
+      "application/zip": [".zip"],
+      "application/x-zip-compressed": [".zip"],
+      "text/*": [".txt", ".md"],
+      "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"],
     },
     maxFiles: 1,
     maxSize: 50 * 1024 * 1024, // 50MB
@@ -210,14 +210,6 @@ export default function CreateProductPage() {
     setIsSubmitting(true);
 
     try {
-      // Build prices object
-      const prices: any = {};
-      if (formData.eth_price) prices.eth = parseFloat(formData.eth_price);
-      if (formData.usdc_price) prices.usdc = parseFloat(formData.usdc_price);
-      if (formData.matic_price) prices.matic = parseFloat(formData.matic_price);
-      if (formData.sol_price) prices.sol = parseFloat(formData.sol_price);
-      if (formData.btc_price) prices.btc = parseFloat(formData.btc_price);
-
       const result = await createProduct({
         owner_address: ownerAddress,
         name: formData.name,
@@ -231,8 +223,9 @@ export default function CreateProductPage() {
         file_storage_id: uploads.productFile?.storageId as any,
         preview_url: uploads.preview?.url,
         preview_storage_id: uploads.preview?.storageId as any,
-        max_supply: formData.max_supply ? parseInt(formData.max_supply) : undefined,
-        prices: Object.keys(prices).length > 0 ? prices : undefined,
+        max_supply: formData.max_supply
+          ? parseInt(formData.max_supply)
+          : undefined,
       });
 
       if (result.success) {
@@ -248,7 +241,7 @@ export default function CreateProductPage() {
   };
 
   const removeUpload = (type: keyof typeof uploads) => {
-    setUploads(prev => ({ ...prev, [type]: undefined }));
+    setUploads((prev) => ({ ...prev, [type]: undefined }));
   };
 
   return (
@@ -266,8 +259,12 @@ export default function CreateProductPage() {
             <span>Back</span>
           </Button>
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">Create New Product</h1>
-            <p className="text-muted-foreground text-sm">Add a new product to your store</p>
+            <h1 className="text-2xl font-semibold text-foreground">
+              Create New Product
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              Add a new product to your store
+            </p>
           </div>
         </div>
 
@@ -277,15 +274,24 @@ export default function CreateProductPage() {
             <div className="lg:col-span-3 space-y-6">
               {/* Basic Information */}
               <Card className="p-6 border-0 bg-card/50">
-                <h2 className="text-xl font-semibold mb-6 text-foreground">Basic Information</h2>
+                <h2 className="text-xl font-semibold mb-6 text-foreground">
+                  Basic Information
+                </h2>
 
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="name" className="text-sm font-medium text-foreground">Product Name *</Label>
+                    <Label
+                      htmlFor="name"
+                      className="text-sm font-medium text-foreground"
+                    >
+                      Product Name *
+                    </Label>
                     <Input
                       id="name"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
                       placeholder="Enter product name"
                       className="mt-1.5 rounded-xl border-border bg-muted/50 focus:bg-background"
                       required
@@ -293,11 +299,21 @@ export default function CreateProductPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="description" className="text-sm font-medium text-foreground">Description *</Label>
+                    <Label
+                      htmlFor="description"
+                      className="text-sm font-medium text-foreground"
+                    >
+                      Description *
+                    </Label>
                     <Textarea
                       id="description"
                       value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
+                      }
                       placeholder="Describe your product in detail..."
                       rows={4}
                       className="mt-1.5 rounded-xl border-border bg-muted/50 focus:bg-background resize-none"
@@ -307,33 +323,43 @@ export default function CreateProductPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="price" className="text-sm font-medium text-foreground">Price *</Label>
+                      <Label
+                        htmlFor="price"
+                        className="text-sm font-medium text-foreground"
+                      >
+                        Price *
+                      </Label>
                       <Input
                         id="price"
                         type="number"
                         step="0.001"
                         value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, price: e.target.value })
+                        }
                         placeholder="0.1"
                         className="mt-1.5 rounded-xl border-border bg-muted/50 focus:bg-background"
                         required
                       />
                     </div>
                     <div>
-                      <Label htmlFor="currency" className="text-sm font-medium text-foreground">Currency</Label>
+                      <Label
+                        htmlFor="currency"
+                        className="text-sm font-medium text-foreground"
+                      >
+                        Currency
+                      </Label>
                       <Select
                         value={formData.currency}
-                        onValueChange={(value) => setFormData({ ...formData, currency: value })}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, currency: value })
+                        }
                       >
                         <SelectTrigger className="mt-1.5 rounded-xl border-border bg-muted/50 focus:bg-background">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="rounded-xl border-border">
-                          <SelectItem value="ETH">ETH</SelectItem>
-                          <SelectItem value="USDC">USDC</SelectItem>
-                          <SelectItem value="MATIC">MATIC</SelectItem>
-                          <SelectItem value="SOL">SOL</SelectItem>
-                          <SelectItem value="BTC">BTC</SelectItem>
+                          <SelectItem value="PYUSD">PYUSD</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -344,15 +370,21 @@ export default function CreateProductPage() {
                       <Label htmlFor="product_type">Product Type</Label>
                       <Select
                         value={formData.product_type}
-                        onValueChange={(value: any) => setFormData({ ...formData, product_type: value })}
+                        onValueChange={(value: any) =>
+                          setFormData({ ...formData, product_type: value })
+                        }
                       >
                         <SelectTrigger className="mt-2">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="digital_download">Digital Download</SelectItem>
+                          <SelectItem value="digital_download">
+                            Digital Download
+                          </SelectItem>
                           <SelectItem value="service">Service</SelectItem>
-                          <SelectItem value="subscription">Subscription</SelectItem>
+                          <SelectItem value="subscription">
+                            Subscription
+                          </SelectItem>
                           <SelectItem value="donation">Donation</SelectItem>
                         </SelectContent>
                       </Select>
@@ -363,7 +395,12 @@ export default function CreateProductPage() {
                         id="max_supply"
                         type="number"
                         value={formData.max_supply}
-                        onChange={(e) => setFormData({ ...formData, max_supply: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            max_supply: e.target.value,
+                          })
+                        }
                         placeholder="Leave empty for unlimited"
                         className="mt-2"
                       />
@@ -374,17 +411,21 @@ export default function CreateProductPage() {
 
               {/* File Uploads */}
               <Card className="p-6 border-0 bg-card/50">
-                <h2 className="text-xl font-semibold mb-6 text-foreground">Media & Files</h2>
+                <h2 className="text-xl font-semibold mb-6 text-foreground">
+                  Media & Files
+                </h2>
 
                 <div className="space-y-4">
                   {/* Product Image */}
                   <div>
-                    <Label className="text-sm font-medium text-foreground">Product Image</Label>
+                    <Label className="text-sm font-medium text-foreground">
+                      Product Image
+                    </Label>
                     <div
                       {...imageDropzone.getRootProps()}
                       className={`mt-1.5 border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200
-                        ${imageDropzone.isDragActive ? 'border-primary bg-primary/5' : 'border-border bg-muted/30'}
-                        ${uploads.image ? 'border-primary bg-primary/5' : ''}
+                        ${imageDropzone.isDragActive ? "border-primary bg-primary/5" : "border-border bg-muted/30"}
+                        ${uploads.image ? "border-primary bg-primary/5" : ""}
                         hover:border-primary hover:bg-primary/5
                       `}
                     >
@@ -392,13 +433,14 @@ export default function CreateProductPage() {
 
                       {uploads.image ? (
                         <div className="space-y-3">
-                          {uploads.image.status === "completed" && uploads.image.url && (
-                            <img
-                              src={uploads.image.url}
-                              alt="Product preview"
-                              className="w-32 h-32 object-cover rounded-lg mx-auto"
-                            />
-                          )}
+                          {uploads.image.status === "completed" &&
+                            uploads.image.url && (
+                              <img
+                                src={uploads.image.url}
+                                alt="Product preview"
+                                className="w-32 h-32 object-cover rounded-lg mx-auto"
+                              />
+                            )}
                           <div className="flex items-center justify-center space-x-2">
                             {uploads.image.status === "uploading" && (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -409,7 +451,9 @@ export default function CreateProductPage() {
                             {uploads.image.status === "error" && (
                               <AlertCircle className="w-4 h-4 text-red-500" />
                             )}
-                            <span className="text-sm font-medium">{uploads.image.file.name}</span>
+                            <span className="text-sm font-medium">
+                              {uploads.image.file.name}
+                            </span>
                             <Button
                               type="button"
                               variant="ghost"
@@ -427,8 +471,12 @@ export default function CreateProductPage() {
                         <div className="space-y-3">
                           <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground" />
                           <div>
-                            <p className="text-sm font-medium">Drop your product image here</p>
-                            <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 5MB</p>
+                            <p className="text-sm font-medium">
+                              Drop your product image here
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              PNG, JPG, GIF up to 5MB
+                            </p>
                           </div>
                         </div>
                       )}
@@ -442,8 +490,8 @@ export default function CreateProductPage() {
                       <div
                         {...productFileDropzone.getRootProps()}
                         className={`mt-2 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-                          ${productFileDropzone.isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'}
-                          ${uploads.productFile ? 'border-green-500 bg-green-50' : ''}
+                          ${productFileDropzone.isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25"}
+                          ${uploads.productFile ? "border-green-500 bg-green-50" : ""}
                         `}
                       >
                         <input {...productFileDropzone.getInputProps()} />
@@ -460,7 +508,9 @@ export default function CreateProductPage() {
                               {uploads.productFile.status === "error" && (
                                 <AlertCircle className="w-4 h-4 text-red-500" />
                               )}
-                              <span className="text-sm font-medium">{uploads.productFile.file.name}</span>
+                              <span className="text-sm font-medium">
+                                {uploads.productFile.file.name}
+                              </span>
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -478,8 +528,12 @@ export default function CreateProductPage() {
                           <div className="space-y-3">
                             <File className="w-12 h-12 mx-auto text-muted-foreground" />
                             <div>
-                              <p className="text-sm font-medium">Drop your product file here</p>
-                              <p className="text-xs text-muted-foreground">PDF, ZIP, Images up to 50MB</p>
+                              <p className="text-sm font-medium">
+                                Drop your product file here
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                PDF, ZIP, Images up to 50MB
+                              </p>
                             </div>
                           </div>
                         )}
@@ -488,68 +542,14 @@ export default function CreateProductPage() {
                   )}
                 </div>
               </Card>
-
-              {/* Alternative Pricing */}
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-6">Alternative Pricing (Optional)</h2>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="eth_price">ETH Price</Label>
-                    <Input
-                      id="eth_price"
-                      type="number"
-                      step="0.001"
-                      value={formData.eth_price}
-                      onChange={(e) => setFormData({ ...formData, eth_price: e.target.value })}
-                      placeholder="0.1"
-                      className="mt-2"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="usdc_price">USDC Price</Label>
-                    <Input
-                      id="usdc_price"
-                      type="number"
-                      step="0.01"
-                      value={formData.usdc_price}
-                      onChange={(e) => setFormData({ ...formData, usdc_price: e.target.value })}
-                      placeholder="100"
-                      className="mt-2"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="matic_price">MATIC Price</Label>
-                    <Input
-                      id="matic_price"
-                      type="number"
-                      step="0.01"
-                      value={formData.matic_price}
-                      onChange={(e) => setFormData({ ...formData, matic_price: e.target.value })}
-                      placeholder="50"
-                      className="mt-2"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="sol_price">SOL Price</Label>
-                    <Input
-                      id="sol_price"
-                      type="number"
-                      step="0.001"
-                      value={formData.sol_price}
-                      onChange={(e) => setFormData({ ...formData, sol_price: e.target.value })}
-                      placeholder="1"
-                      className="mt-2"
-                    />
-                  </div>
-                </div>
-              </Card>
             </div>
 
             {/* Preview Panel */}
             <div className="lg:col-span-1">
               <Card className="p-6 sticky top-4 border-0 bg-card/50">
-                <h2 className="text-lg font-semibold mb-4 text-foreground">Preview</h2>
+                <h2 className="text-lg font-semibold mb-4 text-foreground">
+                  Preview
+                </h2>
 
                 <div className="space-y-4">
                   {uploads.image?.url && (
@@ -565,7 +565,8 @@ export default function CreateProductPage() {
                       {formData.name || "Product Name"}
                     </h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {formData.description || "Product description will appear here..."}
+                      {formData.description ||
+                        "Product description will appear here..."}
                     </p>
                   </div>
 
@@ -584,12 +585,17 @@ export default function CreateProductPage() {
                     <div className="p-3 bg-muted rounded-lg">
                       <div className="flex items-center space-x-2">
                         <File className="w-4 h-4" />
-                        <span className="text-sm">Digital download included</span>
+                        <span className="text-sm">
+                          Digital download included
+                        </span>
                       </div>
                     </div>
                   )}
 
-                  <Button className="w-full rounded-full bg-foreground text-background font-medium" disabled>
+                  <Button
+                    className="w-full rounded-full bg-foreground text-background font-medium"
+                    disabled
+                  >
                     Preview - Buy Now
                   </Button>
                 </div>
@@ -609,10 +615,17 @@ export default function CreateProductPage() {
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || !formData.name || !formData.description || !formData.price}
+              disabled={
+                isSubmitting ||
+                !formData.name ||
+                !formData.description ||
+                !formData.price
+              }
               className="min-w-[140px] rounded-full bg-foreground text-background hover:opacity-90 font-medium"
             >
-              {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {isSubmitting && (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              )}
               Create Product
             </Button>
           </div>
