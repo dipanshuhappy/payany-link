@@ -16,9 +16,11 @@ import { useParams } from "next/navigation";
 import { useEnsTexts } from "@/hooks/use-ens-texts";
 import { useEnsAllAddresses } from "@/hooks/use-ens-all-addresses";
 import { useAccount, useConnect, useEnsAvatar, useEnsName } from "wagmi";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { isAddress } from "viem";
 import { useState } from "react";
-import { Copy, Check, ExternalLink, Wallet } from "lucide-react";
+import { Copy, Check, ExternalLink, Calendar, Database, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import PaymentModal from "@/components/PaymentModal";
@@ -68,6 +70,12 @@ export default function EnsOrAddressPage() {
 
   // Get wallet connection status from useAccount hook (address is already destructured above)
   const isConnected = !!address;
+
+  // Query our Convex database for additional profile data
+  const convexProfile = useQuery(
+    api.ensProfiles.getProfileByDomain,
+    ensNameToUse ? { domain_name: ensNameToUse } : "skip"
+  );
 
   const displayName = isEnsName ? decodedParam : ensName || decodedParam;
   const displayAddress = isEthAddress ? decodedParam : undefined;
@@ -167,7 +175,7 @@ export default function EnsOrAddressPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Profile Information */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Description - Only show for ENS names */}
+            {/* Description - Show from ENS or Convex database */}
             {!isEthAddress &&
               (textsLoading ? (
                 <Card className="p-6">
@@ -181,15 +189,72 @@ export default function EnsOrAddressPage() {
                   </div>
                 </Card>
               ) : (
-                ensDescription && (
+                (ensDescription || convexProfile?.description) && (
                   <Card className="p-6">
                     <h2 className="text-lg font-semibold text-foreground mb-3">
                       About
                     </h2>
-                    <p className="text-muted-foreground">{ensDescription}</p>
+                    <p className="text-muted-foreground">
+                      {ensDescription || convexProfile?.description}
+                    </p>
+                    {convexProfile && (
+                      <div className="flex items-center mt-2 text-xs text-muted-foreground">
+                        <Database className="w-3 h-3 mr-1" />
+                        Enhanced profile data available
+                      </div>
+                    )}
                   </Card>
                 )
               ))}
+
+            {/* Enhanced Profile Data from Convex */}
+            {convexProfile && (
+              <Card className="p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-4">
+                  Profile Details
+                </h2>
+                <div className="space-y-3">
+                  {convexProfile.registration_date && (
+                    <div className="flex items-center space-x-3">
+                      <Badge variant="outline" className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        Registered
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {convexProfile.registration_date}
+                      </span>
+                    </div>
+                  )}
+                  {convexProfile.expiry_date && (
+                    <div className="flex items-center space-x-3">
+                      <Badge variant="outline" className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        Expires
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {convexProfile.expiry_date}
+                      </span>
+                    </div>
+                  )}
+                  {convexProfile.resolved_address && convexProfile.resolved_address !== displayAddress && (
+                    <div className="flex items-center space-x-3">
+                      <Badge variant="outline">Primary Address</Badge>
+                      <span className="text-sm font-mono text-muted-foreground">
+                        {convexProfile.resolved_address}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => copyToClipboard(convexProfile.resolved_address!)}
+                        className="ml-auto"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            )}
 
             {/* Social Links - Only show for ENS names */}
             {!isEthAddress &&
@@ -210,7 +275,7 @@ export default function EnsOrAddressPage() {
                   </div>
                 </Card>
               ) : (
-                (ensTwitter || ensGithub || ensWebsite) && (
+                (ensTwitter || ensGithub || ensWebsite || convexProfile?.twitter || convexProfile?.github) && (
                   <Card className="p-6">
                     <h2 className="text-lg font-semibold text-foreground mb-4">
                       Links
@@ -234,30 +299,30 @@ export default function EnsOrAddressPage() {
                           </a>
                         </div>
                       )}
-                      {ensTwitter && (
+                      {(ensTwitter || convexProfile?.twitter) && (
                         <div className="flex items-center space-x-3">
                           <Badge variant="outline">Twitter</Badge>
                           <a
-                            href={`https://twitter.com/${ensTwitter}`}
+                            href={`https://twitter.com/${ensTwitter || convexProfile?.twitter}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-primary hover:underline flex items-center space-x-1"
                           >
-                            <span>@{ensTwitter}</span>
+                            <span>@{ensTwitter || convexProfile?.twitter}</span>
                             <ExternalLink className="w-3 h-3" />
                           </a>
                         </div>
                       )}
-                      {ensGithub && (
+                      {(ensGithub || convexProfile?.github) && (
                         <div className="flex items-center space-x-3">
                           <Badge variant="outline">GitHub</Badge>
                           <a
-                            href={`https://github.com/${ensGithub}`}
+                            href={`https://github.com/${ensGithub || convexProfile?.github}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-primary hover:underline flex items-center space-x-1"
                           >
-                            <span>{ensGithub}</span>
+                            <span>{ensGithub || convexProfile?.github}</span>
                             <ExternalLink className="w-3 h-3" />
                           </a>
                         </div>
