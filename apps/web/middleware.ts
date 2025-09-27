@@ -58,7 +58,7 @@ export default function middleware(request: NextRequest) {
 
         // Rewrite to the dynamic route
         const url = request.nextUrl.clone();
-        url.pathname = `/${ensName}${pathname}`;
+        url.pathname = `/sub/${ensName}${pathname}`;
 
         console.log("🔄 Rewriting to:", url.pathname);
 
