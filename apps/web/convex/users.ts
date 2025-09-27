@@ -240,37 +240,6 @@ export const updatePreferredChain = mutation({
   },
 });
 
-// Update profile settings
-export const updateProfileSettings = mutation({
-  args: {
-    wallet_address: v.string(),
-    profile_settings: v.object({
-      display_name: v.optional(v.string()),
-      bio: v.optional(v.string()),
-      website: v.optional(v.string()),
-      twitter: v.optional(v.string()),
-      discord: v.optional(v.string()),
-      telegram: v.optional(v.string()),
-    }),
-  },
-  handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_wallet", (q) => q.eq("wallet_address", args.wallet_address.toLowerCase()))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    await ctx.db.patch(user._id, {
-      profile_settings: args.profile_settings,
-      updated_at: Date.now(),
-    });
-
-    return { success: true };
-  },
-});
 
 // Get all users (admin function)
 export const getAllUsers = query({

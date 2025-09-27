@@ -8,16 +8,14 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
-import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
-import { Textarea } from "@workspace/ui/components/textarea";
 import { Badge } from "@workspace/ui/components/badge";
 import { Switch } from "@workspace/ui/components/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
 import { Separator } from "@workspace/ui/components/separator";
 import { toast } from "sonner";
-import { ArrowLeft, Save, User, Settings, Shield, Wallet, Globe, Twitter, Send } from "lucide-react";
+import { ArrowLeft, Shield, Wallet } from "lucide-react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 const CHAIN_OPTIONS = [
@@ -57,34 +55,15 @@ export default function ProfilePage() {
   const toggleFiatEnabled = useMutation(api.users.toggleFiatEnabled);
   const updatePreferredCurrency = useMutation(api.users.updatePreferredCurrency);
   const updatePreferredChain = useMutation(api.users.updatePreferredChain);
-  const updateProfileSettings = useMutation(api.users.updateProfileSettings);
 
   // Form state
-  const [profileForm, setProfileForm] = useState({
-    display_name: "",
-    bio: "",
-    website: "",
-    twitter: "",
-    discord: "",
-    telegram: "",
-  });
-
   const [preferredCurrency, setPreferredCurrency] = useState<"ETH" | "USDC" | "USDT">("USDC");
   const [preferredChainId, setPreferredChainId] = useState(1);
   const [fiatEnabled, setFiatEnabled] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   // Initialize form with user data
   useEffect(() => {
     if (userQuery) {
-      setProfileForm({
-        display_name: userQuery.profile_settings?.display_name || "",
-        bio: userQuery.profile_settings?.bio || "",
-        website: userQuery.profile_settings?.website || "",
-        twitter: userQuery.profile_settings?.twitter || "",
-        discord: userQuery.profile_settings?.discord || "",
-        telegram: userQuery.profile_settings?.telegram || "",
-      });
       setPreferredCurrency(userQuery.preferred_currency || "USDC");
       setPreferredChainId(userQuery.preferred_chain_id || 1);
       setFiatEnabled(userQuery.fiat_enabled || false);
@@ -106,23 +85,6 @@ export default function ProfilePage() {
     (isEthAddress ? address.toLowerCase() === decodedParam.toLowerCase() :
      userQuery?.ens_names?.includes(decodedParam));
 
-  const handleSaveProfile = async () => {
-    if (!address) return;
-
-    setIsLoading(true);
-    try {
-      await updateProfileSettings({
-        wallet_address: address,
-        profile_settings: profileForm,
-      });
-      toast.success("Profile updated successfully!");
-    } catch (error) {
-      toast.error("Failed to update profile");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleCurrencyChange = async (currency: "ETH" | "USDC" | "USDT") => {
     if (!address) return;
@@ -228,120 +190,23 @@ export default function ProfilePage() {
           </Badge>
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="profile">
-              <User className="w-4 h-4 mr-2" />
-              Profile
-            </TabsTrigger>
+        <Tabs defaultValue="payments" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="payments">
               <Wallet className="w-4 h-4 mr-2" />
-              Payments
+              Payment Preferences
             </TabsTrigger>
             <TabsTrigger value="kyc">
               <Shield className="w-4 h-4 mr-2" />
-              KYC & Features
+              Features
             </TabsTrigger>
           </TabsList>
 
-          {/* Profile Tab */}
-          <TabsContent value="profile" className="space-y-6">
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Public Profile</h2>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="display_name">Display Name</Label>
-                  <Input
-                    id="display_name"
-                    value={profileForm.display_name}
-                    onChange={(e) => setProfileForm({ ...profileForm, display_name: e.target.value })}
-                    placeholder="Enter your display name"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="bio">Bio</Label>
-                  <Textarea
-                    id="bio"
-                    value={profileForm.bio}
-                    onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
-                    placeholder="Tell us about yourself"
-                    rows={4}
-                  />
-                </div>
-
-                <Separator />
-
-                <h3 className="text-lg font-semibold">Social Links</h3>
-
-                <div>
-                  <Label htmlFor="website">
-                    <Globe className="w-4 h-4 inline mr-2" />
-                    Website
-                  </Label>
-                  <Input
-                    id="website"
-                    type="url"
-                    value={profileForm.website}
-                    onChange={(e) => setProfileForm({ ...profileForm, website: e.target.value })}
-                    placeholder="https://example.com"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="twitter">
-                    <Twitter className="w-4 h-4 inline mr-2" />
-                    Twitter
-                  </Label>
-                  <Input
-                    id="twitter"
-                    value={profileForm.twitter}
-                    onChange={(e) => setProfileForm({ ...profileForm, twitter: e.target.value })}
-                    placeholder="@username"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="discord">
-                    Discord
-                  </Label>
-                  <Input
-                    id="discord"
-                    value={profileForm.discord}
-                    onChange={(e) => setProfileForm({ ...profileForm, discord: e.target.value })}
-                    placeholder="username#1234"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="telegram">
-                    <Send className="w-4 h-4 inline mr-2" />
-                    Telegram
-                  </Label>
-                  <Input
-                    id="telegram"
-                    value={profileForm.telegram}
-                    onChange={(e) => setProfileForm({ ...profileForm, telegram: e.target.value })}
-                    placeholder="@username"
-                  />
-                </div>
-
-                <Button
-                  onClick={handleSaveProfile}
-                  disabled={isLoading}
-                  className="w-full"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {isLoading ? "Saving..." : "Save Profile"}
-                </Button>
-              </div>
-            </Card>
-          </TabsContent>
 
           {/* Payments Tab */}
           <TabsContent value="payments" className="space-y-6">
             <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Payment Preferences</h2>
+              <h2 className="text-xl font-semibold mb-4">Your Payment Preferences</h2>
 
               <div className="space-y-6">
                 <div>
@@ -432,7 +297,7 @@ export default function ProfilePage() {
           {/* KYC Tab */}
           <TabsContent value="kyc" className="space-y-6">
             <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">KYC Status</h2>
+              <h2 className="text-xl font-semibold mb-4">Account Features</h2>
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                   <div>
