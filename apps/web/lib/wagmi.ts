@@ -1,15 +1,9 @@
-import { getDefaultConfig } from "@rainbow-me/rainbowkit";
-import { createConfig } from "@lifi/sdk";
-import { ChainType, getChains, EVM } from "@lifi/sdk";
-import { getWalletClient, switchChain } from "wagmi/actions";
+import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { WagmiProvider, type Config } from "wagmi";
 import { mainnet, polygon, optimism, arbitrum, base } from "wagmi/chains";
-import { Chain } from "viem";
-import { Config } from "wagmi";
+import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 
-// Initial chains for Wagmi config
-const initialChains = [mainnet, polygon, optimism, arbitrum, base] as const;
-
-export const wagmiConfig: Config = getDefaultConfig({
+export const config: Config = getDefaultConfig({
   appName: "PAYANY.LINK",
   projectId: "6b4e7efed7141d0d78856b9e23328f18",
   chains: initialChains,

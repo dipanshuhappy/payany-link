@@ -15,22 +15,16 @@ import { Separator } from "@workspace/ui/components/separator";
 import { useParams } from "next/navigation";
 import { useEnsTexts } from "@/hooks/use-ens-texts";
 import { useEnsAllAddresses } from "@/hooks/use-ens-all-addresses";
-import { useEnsAvatar, useEnsName, useEnsText } from "wagmi";
+import { useEnsAvatar, useEnsName } from "wagmi";
 import { isAddress } from "viem";
 import { useState } from "react";
 import { Copy, Check, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import PaymentModal from "@/components/PaymentModal";
 
-interface PageProps {
-  params: {
-    ens_or_address: string;
-  };
-}
-
-export default function EnsOrAddressPage({ params }: PageProps) {
-  const { ens_or_address } = params;
-  const decodedParam = decodeURIComponent(ens_or_address);
+export default function EnsOrAddressPage() {
+  const { ens_or_address } = useParams();
+  const decodedParam = decodeURIComponent(ens_or_address as string);
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
@@ -51,29 +45,17 @@ export default function EnsOrAddressPage({ params }: PageProps) {
     chainId: 1,
   });
 
-  const { data: ensDescription, isLoading: descriptionLoading } = useEnsText({
-    name: ensNameToUse,
-    key: "description",
-    chainId: 1,
+  const { data: ensTexts, isLoading: textsLoading } = useEnsTexts({
+    name: ensNameToUse || "",
+    keys: ["description", "com.twitter", "com.github", "url"],
   });
 
-  const { data: ensTwitter, isLoading: twitterLoading } = useEnsText({
-    name: ensNameToUse,
-    key: "com.twitter",
-    chainId: 1,
-  });
-
-  const { data: ensGithub, isLoading: githubLoading } = useEnsText({
-    name: ensNameToUse,
-    key: "com.github",
-    chainId: 1,
-  });
-
-  const { data: ensWebsite, isLoading: websiteLoading } = useEnsText({
-    name: ensNameToUse,
-    key: "url",
-    chainId: 1,
-  });
+  // Extract individual values from the batch response
+  const ensDescription = ensTexts?.find((t) => t.key === "description")?.value;
+  const ensTwitter = ensTexts?.find((t) => t.key === "com.twitter")?.value;
+  const ensGithub = ensTexts?.find((t) => t.key === "com.github")?.value;
+  const ensWebsite = ensTexts?.find((t) => t.key === "url")?.value;
+  console.log(ensGithub, "github");
 
   const { data: allAddresses, isLoading: addressesLoading } =
     useEnsAllAddresses({
@@ -94,10 +76,10 @@ export default function EnsOrAddressPage({ params }: PageProps) {
 
   const isLoadingProfile = isEthAddress
     ? false // For addresses, we don't need to load ENS data
-    : ensNameLoading || avatarLoading || descriptionLoading;
+    : ensNameLoading || avatarLoading || textsLoading;
   const isLoadingSocials = isEthAddress
     ? false // For addresses, we don't load social data
-    : twitterLoading || githubLoading || websiteLoading;
+    : textsLoading;
 
   const handlePay = () => {
     setIsPaymentModalOpen(true);
@@ -176,7 +158,7 @@ export default function EnsOrAddressPage({ params }: PageProps) {
           <div className="lg:col-span-2 space-y-6">
             {/* Description - Only show for ENS names */}
             {!isEthAddress &&
-              (descriptionLoading ? (
+              (textsLoading ? (
                 <Card className="p-6">
                   <h2 className="text-lg font-semibold text-foreground mb-3">
                     About
