@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Define the root domain (you may want to set this via environment variable)
+const ROOT_DOMAIN = process.env.ROOT_DOMAIN || "payany.link";
+
+// Reserved subdomains that should not be treated as ENS names
+const RESERVED = new Set(["www", "app", "api", "admin", "dashboard", "support"]);
+
 export default function middleware(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl;
-
-    // Get host from headers
     const host = request.headers.get("host");
 
     console.log("🔍 Host from headers:", host);
@@ -28,45 +32,38 @@ export default function middleware(request: NextRequest) {
 
     // Remove port from host if present
     const hostWithoutPort = host.split(":")[0];
+    if (!hostWithoutPort) {
+      console.log("❌ Invalid host after port removal");
+      return NextResponse.next();
+    }
+
     console.log("🔍 Host without port:", hostWithoutPort);
 
-    // Split host into parts
-    const hostParts = hostWithoutPort.split(".");
-    console.log("🔍 Host parts:", hostParts);
+    // Check if this is a subdomain of our root domain
+    if (hostWithoutPort.endsWith(ROOT_DOMAIN)) {
+      const sub = hostWithoutPort.replace(`.${ROOT_DOMAIN}`, "");
 
-    // We need at least 3 parts to have a subdomain
-    // e.g., vitalik.eth.mydomain.com = ['vitalik', 'eth', 'mydomain', 'com']
-    if (hostParts.length >= 3) {
-      // Find your main domain (mydomain.com, payany.com, etc.)
-      // Assuming your main domain is the last 2 parts
-      const mainDomainParts = hostParts.slice(-2); // ['mydomain', 'com']
-      const subdomainParts = hostParts.slice(0, -2); // ['vitalik', 'eth'] or ['jesse', 'base', 'eth']
+      console.log("🔍 Extracted subdomain:", sub);
 
-      console.log("🔍 Main domain parts:", mainDomainParts);
-      console.log("🔍 Subdomain parts:", subdomainParts);
-
-      // Skip if it's www
-      if (subdomainParts.length === 1 && subdomainParts[0] === "www") {
-        console.log("⏭️ Skipping - www subdomain");
-        return NextResponse.next();
-      }
-
-      // If we have subdomain parts, construct the ENS name
-      if (subdomainParts.length > 0) {
-        const ensName = subdomainParts.join(".");
-        console.log("✅ Extracted ENS name:", ensName);
+      // If we have a subdomain and it's not reserved
+      if (sub && !RESERVED.has(sub)) {
+        console.log("✅ Valid ENS subdomain:", sub);
 
         // Rewrite to the dynamic route
         const url = request.nextUrl.clone();
-        url.pathname = `/${ensName}${pathname}`;
+        url.pathname = `/sub/${sub}${pathname}`;
 
         console.log("🔄 Rewriting to:", url.pathname);
-
         return NextResponse.rewrite(url);
+      } else if (sub && RESERVED.has(sub)) {
+        console.log("⏭️ Skipping - reserved subdomain:", sub);
+      } else {
+        console.log("🏠 Main domain - no subdomain");
       }
+    } else {
+      console.log("🔍 Not our root domain, skipping");
     }
 
-    console.log("🏠 Main domain - no rewrite needed");
     return NextResponse.next();
   } catch (error) {
     console.error("❌ Middleware error:", error);
