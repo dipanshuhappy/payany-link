@@ -42,7 +42,8 @@ export function ENSSearch() {
 
     setIsSearching(true);
     try {
-      const results = await searchAction({ query: searchQuery, limit: 20 });
+      const results = await searchAction({ query: searchQuery, limit: 5 });
+      console.log("Search results:", results);
       setSearchResults(results);
     } catch (error) {
       console.error("Search error:", error);
@@ -85,7 +86,10 @@ export function ENSSearch() {
           onKeyPress={handleKeyPress}
           className="flex-1"
         />
-        <Button onClick={handleSearch} disabled={!searchQuery.trim() || isSearching}>
+        <Button
+          onClick={handleSearch}
+          disabled={!searchQuery.trim() || isSearching}
+        >
           <Search className="w-4 h-4 mr-2" />
           {isSearching ? "Searching..." : "Search"}
         </Button>
@@ -205,8 +209,7 @@ export function ENSSearch() {
           {searchResults.profiles.length === 0 && searchQuery && (
             <div className="text-center py-8">
               <p className="text-muted-foreground">
-                No profiles found for "{searchQuery}". Try different
-                keywords.
+                No profiles found for "{searchQuery}". Try different keywords.
               </p>
             </div>
           )}
