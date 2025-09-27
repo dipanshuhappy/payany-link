@@ -61,6 +61,15 @@ export default function middleware(request: NextRequest) {
           const fullSubdomain = subdomainParts.join(".");
           console.log("✅ Valid ENS subdomain:", fullSubdomain);
 
+          // Check if the path is /profile
+          if (pathname === "/profile") {
+            console.log("📝 Profile route detected");
+            const url = request.nextUrl.clone();
+            url.pathname = `/sub/${fullSubdomain}/profile`;
+            console.log("🔄 Rewriting to:", url.pathname);
+            return NextResponse.rewrite(url);
+          }
+
           // Rewrite to the dynamic route
           const url = request.nextUrl.clone();
           url.pathname = `/sub/${fullSubdomain}${pathname}`;

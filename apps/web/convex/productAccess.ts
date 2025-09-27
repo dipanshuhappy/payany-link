@@ -248,14 +248,15 @@ export const isFiatEnabled = query({
     owner_address: v.string(),
   },
   handler: async (ctx, args) => {
-    const storeSettings = await ctx.db
-      .query("store_settings")
-      .withIndex("by_owner", (q) => q.eq("owner_address", args.owner_address))
+    // Get user instead of store settings for fiat enabled status
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_wallet", (q) => q.eq("wallet_address", args.owner_address.toLowerCase()))
       .first();
 
     return {
-      enabled: storeSettings?.isFiatEnabled ?? false,
-      hasSettings: !!storeSettings,
+      enabled: user?.fiat_enabled ?? false,
+      hasSettings: !!user,
     };
   },
 });

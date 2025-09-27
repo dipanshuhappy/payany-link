@@ -13,6 +13,7 @@ import type * as files from "../files.js";
 import type * as importProgress from "../importProgress.js";
 import type * as productAccess from "../productAccess.js";
 import type * as products from "../products.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   importProgress: typeof importProgress;
   productAccess: typeof productAccess;
   products: typeof products;
+  users: typeof users;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 

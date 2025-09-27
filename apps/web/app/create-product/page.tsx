@@ -91,7 +91,7 @@ export default function CreateProductPage() {
       purpose,
     });
 
-    return { storageId, url: fileMetadata.url };
+    return { storageId, url: fileMetadata.url ?? '' };
   };
 
   // Image upload dropzone

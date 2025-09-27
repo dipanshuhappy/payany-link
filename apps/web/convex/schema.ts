@@ -128,4 +128,47 @@ export default defineSchema({
     theme_color: v.optional(v.string()),
   })
     .index("by_owner", ["owner_address"]),
+
+  users: defineTable({
+    // Core identity
+    wallet_address: v.string(),
+    ens_names: v.array(v.string()),
+
+    // KYC Status (for future use)
+    kyc_status: v.optional(v.union(
+      v.literal("not_started"),
+      v.literal("pending"),
+      v.literal("in_progress"),
+      v.literal("approved"),
+      v.literal("rejected")
+    )),
+
+    // Feature flags
+    fiat_enabled: v.boolean(),
+
+    // Payment preferences - simplified
+    preferred_currency: v.union(
+      v.literal("ETH"),
+      v.literal("USDC"),
+      v.literal("USDT")
+    ),
+
+    preferred_chain_id: v.number(), // 1 for Ethereum, 8453 for Base, 137 for Polygon, etc.
+
+    // Profile settings
+    profile_settings: v.optional(v.object({
+      display_name: v.optional(v.string()),
+      bio: v.optional(v.string()),
+      website: v.optional(v.string()),
+      twitter: v.optional(v.string()),
+      discord: v.optional(v.string()),
+      telegram: v.optional(v.string()),
+    })),
+
+    // Timestamps
+    created_at: v.number(),
+    updated_at: v.number(),
+  })
+    .index("by_wallet", ["wallet_address"])
+    .index("by_kyc_status", ["kyc_status"]),
 });
