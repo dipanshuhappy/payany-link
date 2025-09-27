@@ -35,6 +35,11 @@ export const DynamicSuffixSearchBar: React.FC<DynamicSuffixSearchBarProps> = ({
 
     const currentName = placeholderNames[currentNameIndex];
 
+    // Early return if no current name available
+    if (!currentName) {
+      return;
+    }
+
     if (isTyping) {
       // Typing animation
       if (charIndex < currentName.length) {
