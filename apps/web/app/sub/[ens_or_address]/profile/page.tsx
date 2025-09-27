@@ -75,7 +75,7 @@ export default function ProfilePage() {
     if (isConnected && address && !userQuery) {
       createOrUpdateUser({
         wallet_address: address,
-        ens_name: isEnsName ? decodedParam : ensName,
+        ens_name: isEnsName ? decodedParam : ensName as string,
       });
     }
   }, [isConnected, address, userQuery, createOrUpdateUser, isEnsName, decodedParam, ensName]);
