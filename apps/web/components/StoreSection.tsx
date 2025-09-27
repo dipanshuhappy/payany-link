@@ -80,8 +80,8 @@ export function StoreSection({ ownerAddress, displayName, ownerEns }: StoreSecti
 
   return (
     <Card className="p-6 border-0 bg-card/50">
-      <div className="flex items-center justify-between mb-6">
-        <div>
+      <div className="flex items-start justify-between mb-6">
+        <div className="flex-1">
           <h2 className="text-xl font-semibold text-foreground mb-1">
             {storeSettings?.store_description ? `${displayName}'s Store` : "Products"}
           </h2>
@@ -95,27 +95,24 @@ export function StoreSection({ ownerAddress, displayName, ownerEns }: StoreSecti
           <Badge variant="secondary" className="px-3 py-1 text-xs font-medium">
             {products.length} {products.length === 1 ? "Product" : "Products"}
           </Badge>
+          {isOwner && (
+            <AddProductButton
+              ownerAddress={ownerAddress}
+              ownerEns={ownerEns}
+              onProductCreated={handleProductCreated}
+            />
+          )}
         </div>
       </div>
 
-      {isOwner && (
-        <div className="mb-6">
-          <AddProductButton
-            ownerAddress={ownerAddress}
-            ownerEns={ownerEns}
-            onProductCreated={handleProductCreated}
-          />
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {products.map((product) => (
           <div
             key={product._id}
-            className="bg-card border border-border rounded-xl p-4 hover:ring-1 hover:ring-ring/30 transition-all duration-200"
+            className="bg-card border border-border rounded-xl p-4 hover:ring-1 hover:ring-ring/30 transition-all duration-200 flex flex-col h-full"
           >
             {product.image_url && (
-              <div className="mb-4">
+              <div className="mb-3">
                 <img
                   src={product.image_url}
                   alt={product.name}
@@ -124,44 +121,46 @@ export function StoreSection({ ownerAddress, displayName, ownerEns }: StoreSecti
               </div>
             )}
 
-            <div className="space-y-3">
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="font-semibold text-foreground leading-tight">{product.name}</h3>
+            <div className="flex-1 flex flex-col">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <h3 className="font-semibold text-foreground leading-tight flex-1">{product.name}</h3>
                 {product.featured && (
-                  <Badge className="bg-primary/10 text-primary border-primary/20 text-xs font-medium">
+                  <Badge className="bg-primary/10 text-primary border-primary/20 text-xs font-medium shrink-0">
                     Featured
                   </Badge>
                 )}
               </div>
 
-              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3 flex-1">
                 {product.description}
               </p>
 
-              <div className="flex items-center justify-between pt-1">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-lg text-foreground">
-                      {product.price} {product.currency}
-                    </span>
-                    <Badge variant="outline" className="text-xs font-medium px-2 py-0.5">
-                      {product.product_type.replace("_", " ")}
-                    </Badge>
+              <div className="space-y-3 mt-auto">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-lg text-foreground">
+                        {product.price} {product.currency}
+                      </span>
+                      <Badge variant="outline" className="text-xs font-medium px-2 py-0.5">
+                        {product.product_type.replace("_", " ")}
+                      </Badge>
+                    </div>
+                    {product.sold_count && product.sold_count > 0 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {product.sold_count} sold
+                      </p>
+                    )}
                   </div>
-                  {product.sold_count && product.sold_count > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {product.sold_count} sold
-                    </p>
-                  )}
                 </div>
 
                 <Button
                   size="sm"
                   onClick={() => handleProductPurchase(product)}
-                  className="rounded-full bg-foreground text-background hover:opacity-90 font-medium px-4"
+                  className="w-full rounded-full bg-foreground text-background hover:opacity-90 font-medium py-2"
                   disabled={
-                    product.max_supply &&
-                    (product.sold_count || 0) >= product.max_supply
+                    !!(product.max_supply &&
+                    (product.sold_count || 0) >= product.max_supply)
                   }
                 >
                   {product.max_supply && (product.sold_count || 0) >= product.max_supply
