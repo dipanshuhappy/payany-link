@@ -145,7 +145,7 @@ export default function EnsOrAddressPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-4 max-w-4xl">
+      <div className="container mx-auto p-4 max-w-5xl">
         {/* Header */}
         <div className="text-center mb-8 pt-8">
           <div className="flex flex-col items-center space-y-4">

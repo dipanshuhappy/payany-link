@@ -105,109 +105,112 @@ export function StoreSection({ ownerAddress, displayName, ownerEns }: StoreSecti
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {products.map((product) => (
           <div
             key={product._id}
-            className="bg-card border border-border rounded-xl p-4 hover:ring-1 hover:ring-ring/30 transition-all duration-200 flex flex-col h-full"
+            className="bg-card border border-border rounded-xl p-5 hover:ring-1 hover:ring-ring/30 transition-all duration-200"
           >
             {product.image_url && (
-              <div className="mb-3">
+              <div className="mb-4">
                 <img
                   src={product.image_url}
                   alt={product.name}
-                  className="w-full h-32 object-cover rounded-lg"
+                  className="w-full h-40 object-cover rounded-lg"
                 />
               </div>
             )}
 
-            <div className="flex-1 flex flex-col">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <h3 className="font-semibold text-foreground leading-tight flex-1">{product.name}</h3>
-                {product.featured && (
-                  <Badge className="bg-primary/10 text-primary border-primary/20 text-xs font-medium shrink-0">
-                    Featured
-                  </Badge>
-                )}
-              </div>
-
-              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3 flex-1">
-                {product.description}
-              </p>
-
-              <div className="space-y-3 mt-auto">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-lg text-foreground">
-                        {product.price} {product.currency}
-                      </span>
-                      <Badge variant="outline" className="text-xs font-medium px-2 py-0.5">
-                        {product.product_type.replace("_", " ")}
-                      </Badge>
-                    </div>
-                    {product.sold_count && product.sold_count > 0 && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {product.sold_count} sold
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <Button
-                  size="sm"
-                  onClick={() => handleProductPurchase(product)}
-                  className="w-full rounded-full bg-foreground text-background hover:opacity-90 font-medium py-2"
-                  disabled={
-                    !!(product.max_supply &&
-                    (product.sold_count || 0) >= product.max_supply)
-                  }
-                >
-                  {product.max_supply && (product.sold_count || 0) >= product.max_supply
-                    ? "Sold Out"
-                    : "Buy Now"}
-                </Button>
-              </div>
-
-              {product.max_supply && (
-                <div className="pt-2 space-y-2">
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Stock</span>
-                    <span>
-                      {product.max_supply - (product.sold_count || 0)} / {product.max_supply}
-                    </span>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-1">
-                    <div
-                      className="bg-primary h-1 rounded-full transition-all duration-300"
-                      style={{
-                        width: `${
-                          ((product.sold_count || 0) / product.max_supply) * 100
-                        }%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Multi-chain pricing */}
-              {product.prices && Object.keys(product.prices).length > 0 && (
-                <div className="pt-3 border-t border-border/50 space-y-2">
-                  <p className="text-xs text-muted-foreground font-medium">
-                    Alternative pricing
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {Object.entries(product.prices).map(([currency, price]) => (
-                      price && (
-                        <Badge key={currency} variant="outline" className="text-xs font-medium px-2 py-0.5">
-                          {price} {currency.toUpperCase()}
-                        </Badge>
-                      )
-                    ))}
-                  </div>
-                </div>
+            {/* Product header */}
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <h3 className="font-semibold text-foreground text-lg leading-tight">{product.name}</h3>
+              {product.featured && (
+                <Badge className="bg-primary/10 text-primary border-primary/20 text-xs font-medium shrink-0">
+                  Featured
+                </Badge>
               )}
             </div>
+
+            {/* Product type badge */}
+            <div className="mb-3">
+              <Badge variant="outline" className="text-xs font-medium">
+                {product.product_type.replace("_", " ")}
+              </Badge>
+            </div>
+
+            {/* Description */}
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-2">
+              {product.description}
+            </p>
+
+            {/* Price section */}
+            <div className="mb-4">
+              <div className="flex items-baseline gap-2 mb-1">
+                <span className="font-bold text-2xl text-foreground">
+                  {product.price}
+                </span>
+                <span className="font-medium text-lg text-muted-foreground">
+                  {product.currency}
+                </span>
+              </div>
+              {(product.sold_count && product.sold_count > 0) || (product.max_supply && product.max_supply > 0) ? (
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  {product.sold_count && product.sold_count > 0 && (
+                    <span>{product.sold_count} sold</span>
+                  )}
+                  {product.max_supply && (
+                    <span>
+                      {product.max_supply - (product.sold_count || 0)} remaining
+                    </span>
+                  )}
+                </div>
+              ) : null}
+            </div>
+
+            {/* Stock bar (only if limited supply) */}
+            {product.max_supply && (
+              <div className="mb-4">
+                <div className="w-full bg-muted rounded-full h-1.5">
+                  <div
+                    className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                    style={{
+                      width: `${
+                        ((product.sold_count || 0) / product.max_supply) * 100
+                      }%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Multi-chain pricing (compact) */}
+            {product.prices && Object.keys(product.prices).length > 0 && (
+              <div className="mb-4">
+                <div className="flex flex-wrap gap-1">
+                  {Object.entries(product.prices).map(([currency, price]) => (
+                    price && (
+                      <Badge key={currency} variant="secondary" className="text-xs">
+                        {price} {currency.toUpperCase()}
+                      </Badge>
+                    )
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Buy button */}
+            <Button
+              onClick={() => handleProductPurchase(product)}
+              className="w-full rounded-full bg-foreground text-background hover:opacity-90 font-medium py-2.5"
+              disabled={
+                !!(product.max_supply &&
+                (product.sold_count || 0) >= product.max_supply)
+              }
+            >
+              {product.max_supply && (product.sold_count || 0) >= product.max_supply
+                ? "Sold Out"
+                : "Buy Now"}
+            </Button>
           </div>
         ))}
       </div>
