@@ -1,7 +1,7 @@
 "use client";
 // "4c45c2ee-0be4-440b-a0e5-38ddf0fb19e6.7044c53d-24e1-47ee-a7c6-0ebdbe675364";
 // "payany-link";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
@@ -12,24 +12,33 @@ import {
 } from "@workspace/ui/components/avatar";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Separator } from "@workspace/ui/components/separator";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEnsTexts } from "@/hooks/use-ens-texts";
 import { useEnsAllAddresses } from "@/hooks/use-ens-all-addresses";
 import { useAccount, useConnect, useEnsAvatar, useEnsName } from "wagmi";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { isAddress } from "viem";
-import { useState } from "react";
 import { Copy, Check, ExternalLink, Calendar, Database, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import PaymentModal from "@/components/PaymentModal";
+import { StoreSection } from "@/components/StoreSection";
+import { StoreManager } from "@/components/StoreManager";
 
 export default function EnsOrAddressPage() {
   const { ens_or_address } = useParams();
+  const searchParams = useSearchParams();
   const decodedParam = decodeURIComponent(ens_or_address as string);
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+  // Show success message if redirected from product creation
+  useEffect(() => {
+    if (searchParams.get('created') === 'true') {
+      toast.success("Product created successfully!");
+    }
+  }, [searchParams]);
 
   // RainbowKit connect modal
   const { openConnectModal } = useConnectModal();
@@ -76,6 +85,7 @@ export default function EnsOrAddressPage() {
     api.ensProfiles.getProfileByDomain,
     ensNameToUse ? { domain_name: ensNameToUse } : "skip"
   );
+
 
   const displayName = isEnsName ? decodedParam : ensName || decodedParam;
   const displayAddress = isEthAddress ? decodedParam : undefined;
@@ -135,7 +145,7 @@ export default function EnsOrAddressPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-4 max-w-4xl">
+      <div className="container mx-auto p-4 max-w-5xl">
         {/* Header */}
         <div className="text-center mb-8 pt-8">
           <div className="flex flex-col items-center space-y-4">
@@ -174,12 +184,12 @@ export default function EnsOrAddressPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Profile Information */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4">
             {/* Description - Show from ENS or Convex database */}
             {!isEthAddress &&
               (textsLoading ? (
-                <Card className="p-6">
-                  <h2 className="text-lg font-semibold text-foreground mb-3">
+                <Card className="p-6 border-0 bg-card/50">
+                  <h2 className="text-xl font-semibold text-foreground mb-4">
                     About
                   </h2>
                   <div className="space-y-2">
@@ -190,16 +200,16 @@ export default function EnsOrAddressPage() {
                 </Card>
               ) : (
                 (ensDescription || convexProfile?.description) && (
-                  <Card className="p-6">
-                    <h2 className="text-lg font-semibold text-foreground mb-3">
+                  <Card className="p-6 border-0 bg-card/50">
+                    <h2 className="text-xl font-semibold text-foreground mb-4">
                       About
                     </h2>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground leading-relaxed">
                       {ensDescription || convexProfile?.description}
                     </p>
                     {convexProfile && (
-                      <div className="flex items-center mt-2 text-xs text-muted-foreground">
-                        <Database className="w-3 h-3 mr-1" />
+                      <div className="flex items-center mt-3 text-xs text-muted-foreground">
+                        <Database className="w-3 h-3 mr-1.5" />
                         Enhanced profile data available
                       </div>
                     )}
@@ -209,8 +219,8 @@ export default function EnsOrAddressPage() {
 
             {/* Enhanced Profile Data from Convex */}
             {convexProfile && (
-              <Card className="p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">
+              <Card className="p-6 border-0 bg-card/50">
+                <h2 className="text-xl font-semibold text-foreground mb-4">
                   Profile Details
                 </h2>
                 <div className="space-y-3">
@@ -259,8 +269,8 @@ export default function EnsOrAddressPage() {
             {/* Social Links - Only show for ENS names */}
             {!isEthAddress &&
               (isLoadingSocials ? (
-                <Card className="p-6">
-                  <h2 className="text-lg font-semibold text-foreground mb-4">
+                <Card className="p-6 border-0 bg-card/50">
+                  <h2 className="text-xl font-semibold text-foreground mb-4">
                     Links
                   </h2>
                   <div className="space-y-3">
@@ -276,8 +286,8 @@ export default function EnsOrAddressPage() {
                 </Card>
               ) : (
                 (ensTwitter || ensGithub || ensWebsite || convexProfile?.twitter || convexProfile?.github) && (
-                  <Card className="p-6">
-                    <h2 className="text-lg font-semibold text-foreground mb-4">
+                  <Card className="p-6 border-0 bg-card/50">
+                    <h2 className="text-xl font-semibold text-foreground mb-4">
                       Links
                     </h2>
                     <div className="space-y-3">
@@ -333,8 +343,8 @@ export default function EnsOrAddressPage() {
               ))}
 
             {/* Addresses */}
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4">
+            <Card className="p-6 border-0 bg-card/50">
+              <h2 className="text-xl font-semibold text-foreground mb-4">
                 {isEthAddress ? "Address" : "Addresses"}
               </h2>
               {addressesLoading ? (
@@ -422,12 +432,25 @@ export default function EnsOrAddressPage() {
                 </div>
               )}
             </Card>
+
+            {/* Store Section */}
+            <StoreSection
+              ownerAddress={isEthAddress ? decodedParam : allAddresses?.[0]?.address || ""}
+              displayName={displayName}
+              ownerEns={ensNameToUse}
+            />
+
+            {/* Store Manager - only visible to owner */}
+            <StoreManager
+              ownerAddress={isEthAddress ? decodedParam : allAddresses?.[0]?.address || ""}
+              displayName={displayName}
+            />
           </div>
 
           {/* Payment Section */}
           <div className="lg:col-span-1">
-            <Card className="p-6 sticky top-4">
-              <h2 className="text-lg font-semibold text-foreground mb-6 text-center">
+            <Card className="p-6 sticky top-4 border-0 bg-card/50">
+              <h2 className="text-xl font-semibold text-foreground mb-6 text-center">
                 Send Payment
               </h2>
 
@@ -453,7 +476,7 @@ export default function EnsOrAddressPage() {
                   <Button
                     onClick={handlePay}
                     size="lg"
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                    className="w-full rounded-full bg-foreground text-background hover:opacity-90 font-semibold py-3"
                     type="button"
                   >
                     {isConnected ? (

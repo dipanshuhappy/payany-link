@@ -9,7 +9,10 @@
  */
 
 import type * as ensProfiles from "../ensProfiles.js";
+import type * as files from "../files.js";
 import type * as importProgress from "../importProgress.js";
+import type * as productAccess from "../productAccess.js";
+import type * as products from "../products.js";
 
 import type {
   ApiFromModules,
@@ -27,7 +30,10 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   ensProfiles: typeof ensProfiles;
+  files: typeof files;
   importProgress: typeof importProgress;
+  productAccess: typeof productAccess;
+  products: typeof products;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 
