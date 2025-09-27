@@ -2,7 +2,9 @@
 
 import React from "react";
 import { Card } from "@workspace/ui/components/card";
-import { Check } from "lucide-react";
+import { Badge } from "@workspace/ui/components/badge";
+import { Skeleton } from "@workspace/ui/components/skeleton";
+import { Check, AlertCircle } from "lucide-react";
 import { Chain } from "./ChainSelection";
 
 export type Token = {
@@ -11,7 +13,7 @@ export type Token = {
   name: string;
   decimals: number;
   logo: string;
-  balance?: string;
+  balance: string;
 };
 
 interface TokenSelectionProps {
@@ -19,6 +21,8 @@ interface TokenSelectionProps {
   tokens: Token[];
   selectedToken: Token | null;
   onTokenSelect: (token: Token) => void;
+  isLoading?: boolean;
+  error?: Error | null;
 }
 
 export const TOKENS: { [chainId: number]: Token[] } = {
@@ -127,6 +131,8 @@ export default function TokenSelection({
   tokens,
   selectedToken,
   onTokenSelect,
+  isLoading = false,
+  error = null,
 }: TokenSelectionProps) {
   return (
     <div className="space-y-4">
@@ -136,43 +142,87 @@ export default function TokenSelection({
           On {selectedChain?.name}
         </p>
       </div>
-      <div className="grid grid-cols-1 gap-3 max-h-[300px] overflow-y-auto">
-        {tokens.map((token) => (
-          <Card
-            key={token.address}
-            className={`p-3 sm:p-4 cursor-pointer transition-all duration-200 hover:shadow-md ${
-              selectedToken?.address === token.address
-                ? "ring-2 ring-primary bg-primary/5"
-                : "hover:bg-muted/50"
-            }`}
-            onClick={() => onTokenSelect(token)}
-          >
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <img
-                src={token.logo}
-                alt={token.symbol}
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex-shrink-0"
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium text-sm sm:text-base truncate">
-                    {token.symbol}
-                  </h4>
-                  <span className="text-xs sm:text-sm text-muted-foreground ml-2">
-                    {token.balance}
-                  </span>
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="grid grid-cols-1 gap-3">
+          {[...Array(5)].map((_, i) => (
+            <Card key={i} className="p-3 sm:p-4">
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <Skeleton className="w-8 h-8 sm:w-10 sm:h-10 rounded-full" />
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-16 mb-1" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  {token.name}
-                </p>
+                <Skeleton className="h-3 w-12" />
               </div>
-              {selectedToken?.address === token.address && (
-                <Check className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
-              )}
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !isLoading && (
+        <Card className="p-4 border-red-200 bg-red-50 dark:bg-red-950/20">
+          <div className="flex items-center space-x-2 text-red-700 dark:text-red-300">
+            <AlertCircle className="w-5 h-5" />
+            <div>
+              <p className="font-medium">Failed to load tokens</p>
+              <p className="text-sm">{error.message}</p>
             </div>
-          </Card>
-        ))}
-      </div>
+          </div>
+        </Card>
+      )}
+
+      {/* No Tokens State */}
+      {!isLoading && !error && tokens.length === 0 && (
+        <Card className="p-6 text-center">
+          <p className="text-muted-foreground">
+            No tokens found on {selectedChain?.name}
+          </p>
+        </Card>
+      )}
+
+      {/* Token List */}
+      {!isLoading && !error && tokens.length > 0 && (
+        <div className="grid grid-cols-1 gap-3 max-h-[300px] overflow-y-auto">
+          {tokens.map((token) => (
+            <Card
+              key={token.address}
+              className={`p-3 sm:p-4 cursor-pointer transition-all duration-200 hover:shadow-md ${
+                selectedToken?.address === token.address
+                  ? "ring-2 ring-primary bg-primary/5"
+                  : "hover:bg-muted/50"
+              }`}
+              onClick={() => onTokenSelect(token)}
+            >
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <img
+                  src={token.logo}
+                  alt={token.symbol}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-sm sm:text-base truncate">
+                      {token.symbol}
+                    </h4>
+                    <span className="text-xs sm:text-sm text-muted-foreground ml-2">
+                      {token.balance}
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                    {token.name}
+                  </p>
+                </div>
+                {selectedToken?.address === token.address && (
+                  <Check className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

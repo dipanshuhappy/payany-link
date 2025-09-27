@@ -21,6 +21,7 @@ export const CustomWagmiProvider: FC<PropsWithChildren> = ({ children }) => {
       return chains;
     },
   });
+  console.log({ chains });
 
   // Synchronize fetched chains with Wagmi config and update connectors
   useSyncWagmiConfig(config, config.connectors as any, chains);

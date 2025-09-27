@@ -13,11 +13,14 @@ import { ChevronLeft, ChevronRight, Check, Loader2 } from "lucide-react";
 import ChainSelection, { CHAINS, Chain } from "./ChainSelection";
 import TokenSelection, { TOKENS, Token } from "./TokenSelection";
 import PaymentConfirmation from "./PaymentConfirmation";
-import { useLifi, getBestRoute, getRouteEstimates } from "@/hooks/use-lifi";
 import { useAccount, useBalance } from "wagmi";
-import { formatUnits, parseUnits } from "viem";
+import { useAlchemyBalances } from "@/hooks/use-alchemy-balances";
+import { erc20Abi, formatUnits, parseUnits } from "viem";
 import { toast } from "sonner";
-
+import { readContract } from "wagmi/actions";
+import { config, lifiConfig } from "@/lib/wagmi";
+import { getRoutes, executeRoute } from "@lifi/sdk";
+import { getWalletClient, switchChain } from "wagmi/actions";
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -31,6 +34,7 @@ export default function PaymentModal({
   recipient,
   recipientAddress,
 }: PaymentModalProps) {
+  console.log({ recipientAddress });
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedChain, setSelectedChain] = useState<Chain | null>(null);
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
@@ -39,31 +43,12 @@ export default function PaymentModal({
 
   const { address, chainId: currentChainId } = useAccount();
 
-  // LI.FI integration for cross-chain payments
+  // Get token balances from Alchemy for selected chain
   const {
-    routes,
-    isLoading: routesLoading,
-    execute,
-    isExecuting,
-    currentStep: executionStep,
-    executionError,
-    refetch: refetchRoutes,
-  } = useLifi({
-    fromChainId: currentChainId || 1,
-    toChainId: selectedChain?.id || 1,
-    fromTokenAddress:
-      selectedToken?.address === "native"
-        ? "0x0000000000000000000000000000000000000000"
-        : selectedToken?.address || "",
-    toTokenAddress:
-      selectedToken?.address === "native"
-        ? "0x0000000000000000000000000000000000000000"
-        : selectedToken?.address || "",
-    fromAmount:
-      amount && selectedToken
-        ? parseUnits(amount, selectedToken.decimals || 18).toString()
-        : "0",
-  });
+    tokens: alchemyTokens,
+    isLoading: tokensLoading,
+    error: tokensError,
+  } = useAlchemyBalances(selectedChain?.id, !!selectedChain && !!address);
 
   // Get user's balance for selected token
   const { data: balance } = useBalance({
@@ -96,7 +81,7 @@ export default function PaymentModal({
   };
 
   const handleConfirm = async () => {
-    if (!routes.length || !selectedChain || !selectedToken || !amount) {
+    if (!selectedChain || !selectedToken || !amount) {
       toast.error("Please complete all payment details");
       return;
     }
@@ -104,14 +89,26 @@ export default function PaymentModal({
     setIsProcessingPayment(true);
 
     try {
-      // Get the best route from LI.FI
-      const bestRoute = getBestRoute(routes);
-      if (!bestRoute) {
-        throw new Error("No route available for this payment");
-      }
+      const quotes = await getRoutes({
+        fromAmount: parseUnits(amount, selectedToken.decimals || 18).toString(),
+        fromChainId: selectedChain?.id,
+        fromTokenAddress: selectedToken.address as `0x${string}`,
+        toChainId: 42161,
+        fromAddress: address,
+        toAddress: recipientAddress,
+        toTokenAddress: "0x46850ad61c2b7d64d08c9c754f45254596696984", // PYUSD
+      });
+      console.log({ quotes });
+      const route = quotes.routes[0];
 
-      // Execute the cross-chain route
-      await execute(bestRoute);
+      const executedRoute = await executeRoute(route as any, {
+        updateRouteHook(route) {
+          console.log(route);
+        },
+      });
+
+      // Simulate processing
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       toast.success("Payment sent successfully!");
       handleClose();
@@ -131,6 +128,39 @@ export default function PaymentModal({
       setSelectedToken(null); // Reset token when chain changes
     }
   }, [selectedChain]);
+
+  // Show connect wallet message if not connected
+  if (!address) {
+    return (
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="sm:max-w-lg max-w-[95vw]">
+          <DialogHeader>
+            <DialogTitle className="text-center">Send Payment</DialogTitle>
+          </DialogHeader>
+          <div className="py-8 text-center">
+            <p className="text-muted-foreground mb-4">
+              Please connect your wallet to continue
+            </p>
+            <Button onClick={handleClose} variant="outline">
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Convert Alchemy tokens to Token format
+  const tokensForSelection: Token[] = alchemyTokens.map((token) => ({
+    address: token.address,
+    symbol: token.symbol,
+    name: token.name,
+    decimals: token.decimals,
+    logo:
+      token.logo ||
+      `https://cryptologos.cc/logos/${token.symbol.toLowerCase()}-logo.svg`,
+    balance: token.formattedBalance,
+  }));
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center space-x-2 sm:space-x-4 mb-6">
@@ -167,7 +197,7 @@ export default function PaymentModal({
   );
 
   const getTokensForChain = () => {
-    return selectedChain ? TOKENS[selectedChain.id] || [] : [];
+    return tokensForSelection;
   };
 
   return (
@@ -194,6 +224,8 @@ export default function PaymentModal({
                 tokens={getTokensForChain()}
                 selectedToken={selectedToken}
                 onTokenSelect={setSelectedToken}
+                isLoading={tokensLoading}
+                error={tokensError}
               />
             )}
             {currentStep === 3 && (
@@ -207,97 +239,30 @@ export default function PaymentModal({
                   onAmountChange={setAmount}
                 />
 
-                {/* LI.FI Route Information */}
-                {routesLoading && (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                    <span className="text-sm text-muted-foreground">
-                      Finding best route...
-                    </span>
-                  </div>
-                )}
-
-                {routes.length > 0 && !routesLoading && selectedToken && (
-                  <div className="bg-muted/30 rounded-lg p-4">
-                    <h4 className="font-medium mb-2 flex items-center">
-                      <span>Cross-chain Route</span>
-                      <Badge variant="secondary" className="ml-2">
-                        LI.FI
-                      </Badge>
-                    </h4>
-                    {(() => {
-                      const bestRoute = getBestRoute(routes);
-                      if (!bestRoute) return null;
-
-                      const estimates = getRouteEstimates(bestRoute);
-
-                      return (
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              Estimated time:
-                            </span>
-                            <span>
-                              {estimates.executionTimeMinutes} minutes
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              Gas cost:
-                            </span>
-                            <span>${estimates.gasCostUSD || "0.00"}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              Tools:
-                            </span>
-                            <span className="text-xs">{estimates.tools}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              You will receive:
-                            </span>
-                            <span className="font-medium">
-                              {formatUnits(
-                                BigInt(estimates.toAmount),
-                                selectedToken.decimals || 18,
-                              )}{" "}
-                              {selectedToken.symbol}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )}
-
-                {currentChainId !== selectedChain?.id &&
-                  !routesLoading &&
-                  routes.length === 0 &&
-                  amount && (
-                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
-                      <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                        Cross-chain payment required. Please ensure you have
-                        sufficient balance and gas fees.
+                <div className="bg-muted/30 rounded-lg p-4">
+                  <h4 className="font-medium mb-2 flex items-center">
+                    <span>Payment to Arbitrum</span>
+                    <Badge variant="secondary" className="ml-2">
+                      Cross-chain
+                    </Badge>
+                  </h4>
+                  <div className="text-sm text-muted-foreground">
+                    <p>Destination: PYUSD on Arbitrum</p>
+                    <p>Recipient: {recipient}</p>
+                    {recipientAddress && (
+                      <p>
+                        Address: {recipientAddress.slice(0, 10)}...
+                        {recipientAddress.slice(-6)}
                       </p>
-                    </div>
-                  )}
-
-                {executionStep && (
-                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-                    <div className="flex items-center space-x-2">
-                      <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-                      <p className="text-sm text-blue-700 dark:text-blue-300">
-                        {executionStep}
-                      </p>
-                    </div>
+                    )}
                   </div>
-                )}
+                </div>
 
-                {executionError && (
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-                    <p className="text-sm text-red-700 dark:text-red-300">
-                      Error: {executionError.message}
+                {currentChainId !== 42161 && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                      Cross-chain payment to Arbitrum required. Please ensure
+                      you have sufficient balance and gas fees.
                     </p>
                   </div>
                 )}
@@ -317,16 +282,16 @@ export default function PaymentModal({
 
             <Button
               onClick={currentStep === 3 ? handleConfirm : handleNext}
-              disabled={
-                (currentStep === 1 && !selectedChain) ||
-                (currentStep === 2 && !selectedToken) ||
-                (currentStep === 3 && (!amount || routesLoading)) ||
-                isProcessingPayment ||
-                isExecuting
-              }
+              // disabled={
+              //   (currentStep === 1 && !selectedChain) ||
+              //   (currentStep === 2 && (!selectedToken || tokensLoading)) ||
+              //   (currentStep === 3 && !amount) ||
+              //   isProcessingPayment ||
+              //   !address
+              // }
               className="bg-primary hover:bg-primary/90"
             >
-              {isProcessingPayment || isExecuting ? (
+              {isProcessingPayment ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Processing...

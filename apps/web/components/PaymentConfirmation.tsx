@@ -45,14 +45,7 @@ export default function PaymentConfirmation({
             )}
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Chain:</span>
-              <div className="flex items-center space-x-2">
-                <img
-                  src={selectedChain?.logo}
-                  alt={selectedChain?.name}
-                  className="w-5 h-5 rounded-full"
-                />
-                <span>{selectedChain?.name}</span>
-              </div>
+              <span>{selectedChain?.name}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Token:</span>

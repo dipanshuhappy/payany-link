@@ -14,7 +14,7 @@ import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 export const config = getDefaultConfig({
   appName: "PAYANY.LINK",
   projectId: "6b4e7efed7141d0d78856b9e23328f18",
-  chains: [mainnet],
+  chains: [mainnet, polygon],
   ssr: true,
 });
 // export const config = createConfig({
@@ -23,9 +23,13 @@ export const config = getDefaultConfig({
 //     [mainnet.id]: http(),
 //   },
 // });
-
+const chains = await getChains({
+  chainTypes: [ChainType.EVM],
+});
 export const lifiConfig = createConfigLifi({
   integrator: "payany-link",
+
+  chains: chains,
   providers: [
     EVM({
       getWalletClient: () => getWalletClient(config),

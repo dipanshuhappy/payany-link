@@ -59,7 +59,6 @@ export default function EnsOrAddressPage() {
   const ensTwitter = ensTexts?.find((t) => t.key === "com.twitter")?.value;
   const ensGithub = ensTexts?.find((t) => t.key === "com.github")?.value;
   const ensWebsite = ensTexts?.find((t) => t.key === "url")?.value;
-  console.log(ensGithub, "github");
 
   const { data: allAddresses, isLoading: addressesLoading } =
     useEnsAllAddresses({
@@ -420,7 +419,9 @@ export default function EnsOrAddressPage() {
           setIsPaymentModalOpen(false);
         }}
         recipient={displayName}
-        recipientAddress={isEthAddress ? decodedParam : displayAddress}
+        recipientAddress={
+          isEthAddress ? decodedParam : (allAddresses?.[0]?.address ?? "")
+        }
       />
     </div>
   );
