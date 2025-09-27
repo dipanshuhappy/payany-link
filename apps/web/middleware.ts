@@ -41,22 +41,35 @@ export default function middleware(request: NextRequest) {
 
     // Check if this is a subdomain of our root domain
     if (hostWithoutPort.endsWith(ROOT_DOMAIN)) {
-      const sub = hostWithoutPort.replace(`.${ROOT_DOMAIN}`, "");
+      // Parse host and root domain into parts
+      const hostParts = hostWithoutPort.split(".");
+      const rootParts = ROOT_DOMAIN.split(".");
 
-      console.log("🔍 Extracted subdomain:", sub);
+      console.log("🔍 Host parts:", hostParts);
+      console.log("🔍 Root parts:", rootParts);
 
-      // If we have a subdomain and it's not reserved
-      if (sub && !RESERVED.has(sub)) {
-        console.log("✅ Valid ENS subdomain:", sub);
+      // Extract subdomain parts (everything before the root domain)
+      if (hostParts.length > rootParts.length) {
+        const subdomainParts = hostParts.slice(0, hostParts.length - rootParts.length);
+        const firstSubdomain = subdomainParts[0];
 
-        // Rewrite to the dynamic route
-        const url = request.nextUrl.clone();
-        url.pathname = `/sub/${sub}${pathname}`;
+        console.log("🔍 Subdomain parts:", subdomainParts);
+        console.log("🔍 First subdomain:", firstSubdomain);
 
-        console.log("🔄 Rewriting to:", url.pathname);
-        return NextResponse.rewrite(url);
-      } else if (sub && RESERVED.has(sub)) {
-        console.log("⏭️ Skipping - reserved subdomain:", sub);
+        // Only check the first subdomain part against reserved list
+        if (firstSubdomain && !RESERVED.has(firstSubdomain)) {
+          const fullSubdomain = subdomainParts.join(".");
+          console.log("✅ Valid ENS subdomain:", fullSubdomain);
+
+          // Rewrite to the dynamic route
+          const url = request.nextUrl.clone();
+          url.pathname = `/sub/${fullSubdomain}${pathname}`;
+
+          console.log("🔄 Rewriting to:", url.pathname);
+          return NextResponse.rewrite(url);
+        } else if (firstSubdomain && RESERVED.has(firstSubdomain)) {
+          console.log("⏭️ Skipping - reserved first subdomain:", firstSubdomain);
+        }
       } else {
         console.log("🏠 Main domain - no subdomain");
       }
