@@ -11,10 +11,13 @@ import {
 } from "@lifi/sdk";
 import { getWalletClient, switchChain } from "wagmi/actions";
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
+const chains = await getChains({
+  chainTypes: [ChainType.EVM],
+});
 export const config = getDefaultConfig({
   appName: "PAYANY.LINK",
   projectId: "6b4e7efed7141d0d78856b9e23328f18",
-  chains: [mainnet, polygon],
+  chains: [mainnet, polygon, optimism, arbitrum, base],
   ssr: true,
 });
 // export const config = createConfig({
@@ -23,9 +26,7 @@ export const config = getDefaultConfig({
 //     [mainnet.id]: http(),
 //   },
 // });
-const chains = await getChains({
-  chainTypes: [ChainType.EVM],
-});
+
 export const lifiConfig = createConfigLifi({
   integrator: "payany-link",
 
