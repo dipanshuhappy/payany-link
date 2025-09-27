@@ -1,7 +1,7 @@
 "use client";
 // "4c45c2ee-0be4-440b-a0e5-38ddf0fb19e6.7044c53d-24e1-47ee-a7c6-0ebdbe675364";
 // "payany-link";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
@@ -12,14 +12,13 @@ import {
 } from "@workspace/ui/components/avatar";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Separator } from "@workspace/ui/components/separator";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEnsTexts } from "@/hooks/use-ens-texts";
 import { useEnsAllAddresses } from "@/hooks/use-ens-all-addresses";
 import { useAccount, useConnect, useEnsAvatar, useEnsName } from "wagmi";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { isAddress } from "viem";
-import { useState } from "react";
 import { Copy, Check, ExternalLink, Calendar, Database, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
@@ -29,9 +28,17 @@ import { StoreManager } from "@/components/StoreManager";
 
 export default function EnsOrAddressPage() {
   const { ens_or_address } = useParams();
+  const searchParams = useSearchParams();
   const decodedParam = decodeURIComponent(ens_or_address as string);
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+  // Show success message if redirected from product creation
+  useEffect(() => {
+    if (searchParams.get('created') === 'true') {
+      toast.success("Product created successfully!");
+    }
+  }, [searchParams]);
 
   // RainbowKit connect modal
   const { openConnectModal } = useConnectModal();
@@ -430,6 +437,7 @@ export default function EnsOrAddressPage() {
             <StoreSection
               ownerAddress={isEthAddress ? decodedParam : allAddresses?.[0]?.address || ""}
               displayName={displayName}
+              ownerEns={ensNameToUse}
             />
 
             {/* Store Manager - only visible to owner */}

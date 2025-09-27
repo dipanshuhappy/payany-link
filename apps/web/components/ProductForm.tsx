@@ -25,6 +25,7 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
+import { useRouter } from "next/navigation";
 
 interface ProductFormProps {
   isOpen: boolean;
@@ -351,7 +352,7 @@ export function AddProductButton({
   onProductCreated?: () => void;
 }) {
   const { address } = useAccount();
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const router = useRouter();
 
   // Check if current user is the owner
   const isOwner = address?.toLowerCase() === ownerAddress.toLowerCase();
@@ -360,24 +361,23 @@ export function AddProductButton({
     return null;
   }
 
-  return (
-    <>
-      <Button
-        onClick={() => setIsFormOpen(true)}
-        size="sm"
-        className="mb-4"
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add Product
-      </Button>
+  const handleAddProduct = () => {
+    const params = new URLSearchParams();
+    params.set("owner", ownerAddress);
+    if (ownerEns) {
+      params.set("ens", ownerEns);
+    }
+    router.push(`/create-product?${params.toString()}`);
+  };
 
-      <ProductForm
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        ownerAddress={ownerAddress}
-        ownerEns={ownerEns}
-        onProductCreated={onProductCreated}
-      />
-    </>
+  return (
+    <Button
+      onClick={handleAddProduct}
+      size="sm"
+      className="mb-4"
+    >
+      <Plus className="w-4 h-4 mr-2" />
+      Add Product
+    </Button>
   );
 }

@@ -26,8 +26,11 @@ export const createProduct = mutation({
       v.literal("donation")
     ),
     image_url: v.optional(v.string()),
+    image_storage_id: v.optional(v.id("_storage")),
     file_url: v.optional(v.string()),
+    file_storage_id: v.optional(v.id("_storage")),
     preview_url: v.optional(v.string()),
+    preview_storage_id: v.optional(v.id("_storage")),
     max_supply: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -67,8 +70,11 @@ export const updateProduct = mutation({
       btc: v.optional(v.number()),
     })),
     image_url: v.optional(v.string()),
+    image_storage_id: v.optional(v.id("_storage")),
     file_url: v.optional(v.string()),
+    file_storage_id: v.optional(v.id("_storage")),
     preview_url: v.optional(v.string()),
+    preview_storage_id: v.optional(v.id("_storage")),
     max_supply: v.optional(v.number()),
     active: v.optional(v.boolean()),
     featured: v.optional(v.boolean()),

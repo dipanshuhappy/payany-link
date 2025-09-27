@@ -4,18 +4,22 @@ import React from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Package } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
+import { useAccount } from "wagmi";
 import { AddProductButton } from "./ProductForm";
 
 interface StoreSectionProps {
   ownerAddress: string;
   displayName: string;
+  ownerEns?: string;
 }
 
-export function StoreSection({ ownerAddress, displayName }: StoreSectionProps) {
+export function StoreSection({ ownerAddress, displayName, ownerEns }: StoreSectionProps) {
+  const { address } = useAccount();
+
   // Query products for this address
   const products = useQuery(
     api.products.getProductsByOwner,
@@ -38,16 +42,34 @@ export function StoreSection({ ownerAddress, displayName }: StoreSectionProps) {
     // The query will automatically refetch due to Convex reactivity
   };
 
-  // Don't render if no products and user is not the owner
-  if (!products || (products.length === 0 && !ownerAddress)) {
+  const isOwner = address?.toLowerCase() === ownerAddress.toLowerCase();
+
+  // Show empty state for owners, nothing for non-owners
+  if (!products || products.length === 0) {
+
+    if (!isOwner) {
+      return null; // Don't show anything to non-owners when no products
+    }
+
     return (
-      <div className="flex flex-col items-center justify-center p-8">
-        <AddProductButton
-          ownerAddress={ownerAddress}
-          displayName={displayName}
-          onProductCreated={handleProductCreated}
-        />
-      </div>
+      <Card className="p-8">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center">
+            <Package className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <div>
+            <h3 className="text-lg font-medium">No products yet</h3>
+            <p className="text-muted-foreground text-sm">
+              Start building your store by creating your first product
+            </p>
+          </div>
+          <AddProductButton
+            ownerAddress={ownerAddress}
+            ownerEns={ownerEns}
+            onProductCreated={handleProductCreated}
+          />
+        </div>
+      </Card>
     );
   }
 
@@ -71,7 +93,7 @@ export function StoreSection({ ownerAddress, displayName }: StoreSectionProps) {
 
       <AddProductButton
         ownerAddress={ownerAddress}
-        displayName={displayName}
+        ownerEns={ownerEns}
         onProductCreated={handleProductCreated}
       />
 

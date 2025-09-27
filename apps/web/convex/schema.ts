@@ -82,8 +82,11 @@ export default defineSchema({
 
     // Media & files
     image_url: v.optional(v.string()),
+    image_storage_id: v.optional(v.id("_storage")),
     file_url: v.optional(v.string()),
+    file_storage_id: v.optional(v.id("_storage")),
     preview_url: v.optional(v.string()),
+    preview_storage_id: v.optional(v.id("_storage")),
 
     // Status & metadata
     active: v.boolean(),
