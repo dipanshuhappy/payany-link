@@ -2,12 +2,12 @@ import { query, mutation, action } from "./_generated/server";
 import { v } from "convex/values";
 import { components, api } from "./_generated/api";
 import { RAG } from "@convex-dev/rag";
-import { openai } from "@ai-sdk/openai";
+import { google } from "@ai-sdk/google";
 import type { Doc, Id } from "./_generated/dataModel";
 
 const rag = new RAG(components.rag, {
-  textEmbeddingModel: openai.embedding("text-embedding-3-small"),
-  embeddingDimension: 1536,
+  textEmbeddingModel: google.textEmbedding("gemini-embedding-001"),
+  embeddingDimension: 768,
 });
 
 export const addProfile = mutation({
