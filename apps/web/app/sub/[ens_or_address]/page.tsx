@@ -1,5 +1,6 @@
 "use client";
-
+// "4c45c2ee-0be4-440b-a0e5-38ddf0fb19e6.7044c53d-24e1-47ee-a7c6-0ebdbe675364";
+// "payany-link";
 import React from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
@@ -14,18 +15,24 @@ import { Separator } from "@workspace/ui/components/separator";
 import { useParams } from "next/navigation";
 import { useEnsTexts } from "@/hooks/use-ens-texts";
 import { useEnsAllAddresses } from "@/hooks/use-ens-all-addresses";
-import { useEnsAvatar, useEnsName } from "wagmi";
+import { useAccount, useConnect, useEnsAvatar, useEnsName } from "wagmi";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { isAddress } from "viem";
 import { useState } from "react";
-import { Copy, Check, ExternalLink, Calendar, Database } from "lucide-react";
+import { Copy, Check, ExternalLink, Calendar, Database, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import PaymentModal from "@/components/PaymentModal";
 
 export default function EnsOrAddressPage() {
   const { ens_or_address } = useParams();
   const decodedParam = decodeURIComponent(ens_or_address as string);
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+  // RainbowKit connect modal
+  const { openConnectModal } = useConnectModal();
 
   // Check if it's an address or ENS name
   const isEthAddress = isAddress(decodedParam);
@@ -54,12 +61,15 @@ export default function EnsOrAddressPage() {
   const ensTwitter = ensTexts?.find((t) => t.key === "com.twitter")?.value;
   const ensGithub = ensTexts?.find((t) => t.key === "com.github")?.value;
   const ensWebsite = ensTexts?.find((t) => t.key === "url")?.value;
-  console.log(ensGithub, "github");
 
   const { data: allAddresses, isLoading: addressesLoading } =
     useEnsAllAddresses({
       name: ensNameToUse || "",
     });
+  const { address } = useAccount();
+
+  // Get wallet connection status from useAccount hook (address is already destructured above)
+  const isConnected = !!address;
 
   // Query our Convex database for additional profile data
   const convexProfile = useQuery(
@@ -87,8 +97,11 @@ export default function EnsOrAddressPage() {
     : textsLoading;
 
   const handlePay = () => {
-    console.log("Initiating payment to:", displayName);
-    // Payment logic will be implemented here
+    if (isConnected) {
+      setIsPaymentModalOpen(true);
+    } else {
+      openConnectModal?.();
+    }
   };
 
   const copyToClipboard = async (text: string) => {
@@ -441,12 +454,22 @@ export default function EnsOrAddressPage() {
                     onClick={handlePay}
                     size="lg"
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                    type="button"
                   >
-                    PAY
+                    {isConnected ? (
+                      "PAY"
+                    ) : (
+                      <>
+                        <Wallet className="w-4 h-4 mr-2" />
+                        Connect Wallet to Pay
+                      </>
+                    )}
                   </Button>
 
                   <p className="text-xs text-muted-foreground text-center">
-                    Secure payments powered by blockchain technology
+                    {isConnected
+                      ? "Secure payments powered by blockchain technology"
+                      : "Connect your wallet to start sending payments"}
                   </p>
                 </div>
               </div>
@@ -454,6 +477,17 @@ export default function EnsOrAddressPage() {
           </div>
         </div>
       </div>
+
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => {
+          setIsPaymentModalOpen(false);
+        }}
+        recipient={displayName}
+        recipientAddress={
+          isEthAddress ? decodedParam : (allAddresses?.[0]?.address ?? "")
+        }
+      />
     </div>
   );
 }
