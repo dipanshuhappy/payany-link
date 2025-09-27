@@ -135,7 +135,7 @@ export const searchProfiles = action({
       namespace: "ens-profiles",
       query: args.query,
       limit: limit * 2, // Get more results to filter after
-      vectorScoreThreshold: 0.5,
+      vectorScoreThreshold: 0.2,
     });
 
     console.log(entries, "ragEntries");

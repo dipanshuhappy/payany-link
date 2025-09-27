@@ -20,14 +20,14 @@ async function clearRagNamespace() {
   console.log("🧹 Clearing RAG namespace to fix dimension mismatch...");
 
   try {
-    const result = await client.action(api.ensProfiles.clearRagNamespace, {});
+    // const result = await client.action(api.ensProfiles.clearRagNamespace, {});
 
-    if (result.success) {
-      console.log("✅ RAG namespace cleared successfully");
-      console.log("📝 You can now run the import script with OpenAI embeddings");
-    } else {
-      console.error("❌ Failed to clear RAG namespace:", result.error);
-    }
+    // if (result.success) {
+    //   console.log("✅ RAG namespace cleared successfully");
+    //   console.log("📝 You can now run the import script with OpenAI embeddings");
+    // } else {
+    //   console.error("❌ Failed to clear RAG namespace:", result.error);
+    // }
   } catch (error: any) {
     console.error("❌ Error clearing RAG namespace:", error.message);
   }
