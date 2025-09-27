@@ -253,61 +253,61 @@ export default function CreateProductPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-6 max-w-4xl">
+      <div className="container mx-auto p-6 max-w-5xl">
         {/* Header */}
-        <div className="flex items-center space-x-4 mb-8">
+        <div className="flex items-center gap-4 mb-8">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => router.back()}
-            className="flex items-center space-x-2"
+            className="flex items-center gap-2 rounded-xl hover:bg-muted/50"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back</span>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Create New Product</h1>
-            <p className="text-muted-foreground">Add a new product to your store</p>
+            <h1 className="text-2xl font-semibold text-foreground">Create New Product</h1>
+            <p className="text-muted-foreground text-sm">Add a new product to your store</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main Form */}
-            <div className="lg:col-span-2 space-y-8">
+            <div className="lg:col-span-2 space-y-6">
               {/* Basic Information */}
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-6">Basic Information</h2>
+              <Card className="p-6 border-0 bg-card/50">
+                <h2 className="text-xl font-semibold mb-6 text-foreground">Basic Information</h2>
 
-                <div className="space-y-6">
+                <div className="space-y-4">
                   <div>
-                    <Label htmlFor="name">Product Name *</Label>
+                    <Label htmlFor="name" className="text-sm font-medium text-foreground">Product Name *</Label>
                     <Input
                       id="name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="Enter product name"
-                      className="mt-2"
+                      className="mt-1.5 rounded-xl border-border bg-muted/50 focus:bg-background"
                       required
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="description">Description *</Label>
+                    <Label htmlFor="description" className="text-sm font-medium text-foreground">Description *</Label>
                     <Textarea
                       id="description"
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       placeholder="Describe your product in detail..."
                       rows={4}
-                      className="mt-2"
+                      className="mt-1.5 rounded-xl border-border bg-muted/50 focus:bg-background resize-none"
                       required
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="price">Price *</Label>
+                      <Label htmlFor="price" className="text-sm font-medium text-foreground">Price *</Label>
                       <Input
                         id="price"
                         type="number"
@@ -315,20 +315,20 @@ export default function CreateProductPage() {
                         value={formData.price}
                         onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                         placeholder="0.1"
-                        className="mt-2"
+                        className="mt-1.5 rounded-xl border-border bg-muted/50 focus:bg-background"
                         required
                       />
                     </div>
                     <div>
-                      <Label htmlFor="currency">Currency</Label>
+                      <Label htmlFor="currency" className="text-sm font-medium text-foreground">Currency</Label>
                       <Select
                         value={formData.currency}
                         onValueChange={(value) => setFormData({ ...formData, currency: value })}
                       >
-                        <SelectTrigger className="mt-2">
+                        <SelectTrigger className="mt-1.5 rounded-xl border-border bg-muted/50 focus:bg-background">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="rounded-xl border-border">
                           <SelectItem value="ETH">ETH</SelectItem>
                           <SelectItem value="USDC">USDC</SelectItem>
                           <SelectItem value="MATIC">MATIC</SelectItem>
@@ -373,18 +373,19 @@ export default function CreateProductPage() {
               </Card>
 
               {/* File Uploads */}
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-6">Media & Files</h2>
+              <Card className="p-6 border-0 bg-card/50">
+                <h2 className="text-xl font-semibold mb-6 text-foreground">Media & Files</h2>
 
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {/* Product Image */}
                   <div>
-                    <Label>Product Image</Label>
+                    <Label className="text-sm font-medium text-foreground">Product Image</Label>
                     <div
                       {...imageDropzone.getRootProps()}
-                      className={`mt-2 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-                        ${imageDropzone.isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'}
-                        ${uploads.image ? 'border-green-500 bg-green-50' : ''}
+                      className={`mt-1.5 border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200
+                        ${imageDropzone.isDragActive ? 'border-primary bg-primary/5' : 'border-border bg-muted/30'}
+                        ${uploads.image ? 'border-primary bg-primary/5' : ''}
+                        hover:border-primary hover:bg-primary/5
                       `}
                     >
                       <input {...imageDropzone.getInputProps()} />
@@ -547,8 +548,8 @@ export default function CreateProductPage() {
 
             {/* Preview Panel */}
             <div className="lg:col-span-1">
-              <Card className="p-6 sticky top-4">
-                <h2 className="text-lg font-semibold mb-4">Preview</h2>
+              <Card className="p-6 sticky top-4 border-0 bg-card/50">
+                <h2 className="text-lg font-semibold mb-4 text-foreground">Preview</h2>
 
                 <div className="space-y-4">
                   {uploads.image?.url && (
@@ -588,7 +589,7 @@ export default function CreateProductPage() {
                     </div>
                   )}
 
-                  <Button className="w-full" disabled>
+                  <Button className="w-full rounded-full bg-foreground text-background font-medium" disabled>
                     Preview - Buy Now
                   </Button>
                 </div>
@@ -597,18 +598,19 @@ export default function CreateProductPage() {
           </div>
 
           {/* Submit */}
-          <div className="flex justify-end space-x-4 pt-8 border-t">
+          <div className="flex justify-end gap-3 pt-6 border-t border-border/50">
             <Button
               type="button"
               variant="outline"
               onClick={() => router.back()}
+              className="rounded-xl bg-muted/50 border-border hover:bg-muted"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || !formData.name || !formData.description || !formData.price}
-              className="min-w-[120px]"
+              className="min-w-[140px] rounded-full bg-foreground text-background hover:opacity-90 font-medium"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Create Product

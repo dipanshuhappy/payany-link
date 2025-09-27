@@ -138,10 +138,10 @@ export function StoreManager({ ownerAddress, displayName }: StoreManagerProps) {
 
   return (
     <div className="space-y-4">
-      <Card className="p-4">
-        <div className="flex items-center justify-between">
+      <Card className="p-6 border-0 bg-card/50">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="font-medium">Store Management</h3>
+            <h3 className="text-xl font-semibold text-foreground">Store Management</h3>
             <p className="text-sm text-muted-foreground">
               Manage your store settings and products
             </p>
@@ -150,6 +150,7 @@ export function StoreManager({ ownerAddress, displayName }: StoreManagerProps) {
             variant="outline"
             size="sm"
             onClick={() => setIsSettingsOpen(true)}
+            className="rounded-xl bg-muted/50 border-border hover:bg-muted"
           >
             <Settings className="w-4 h-4 mr-2" />
             Settings
@@ -157,49 +158,53 @@ export function StoreManager({ ownerAddress, displayName }: StoreManagerProps) {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-4 mt-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold">
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center p-4 bg-background/50 rounded-xl border border-border/50">
+            <div className="text-2xl font-semibold text-foreground">
               {products?.length || 0}
             </div>
-            <div className="text-xs text-muted-foreground">Products</div>
+            <div className="text-xs text-muted-foreground font-medium">Products</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold">
+          <div className="text-center p-4 bg-background/50 rounded-xl border border-border/50">
+            <div className="text-2xl font-semibold text-foreground">
               {products?.filter(p => p.active).length || 0}
             </div>
-            <div className="text-xs text-muted-foreground">Active</div>
+            <div className="text-xs text-muted-foreground font-medium">Active</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold">
+          <div className="text-center p-4 bg-background/50 rounded-xl border border-border/50">
+            <div className="text-2xl font-semibold text-foreground">
               {products?.reduce((total, p) => total + (p.sold_count || 0), 0) || 0}
             </div>
-            <div className="text-xs text-muted-foreground">Sales</div>
+            <div className="text-xs text-muted-foreground font-medium">Sales</div>
           </div>
         </div>
       </Card>
 
       {/* Products Management */}
       {products && products.length > 0 && (
-        <Card className="p-4">
-          <h3 className="font-medium mb-4">Your Products</h3>
+        <Card className="p-6 border-0 bg-card/50">
+          <h3 className="text-xl font-semibold text-foreground mb-4">Your Products</h3>
           <div className="space-y-3">
             {products.map((product) => (
               <div
                 key={product._id}
-                className="flex items-center justify-between p-3 border rounded-lg"
+                className="flex items-center justify-between p-4 bg-background/50 border border-border/50 rounded-xl hover:bg-background/80 transition-colors"
               >
                 <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium">{product.name}</span>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-foreground">{product.name}</span>
                     <Badge
                       variant={product.active ? "default" : "secondary"}
-                      className="text-xs"
+                      className={`text-xs font-medium px-2 py-0.5 ${
+                        product.active
+                          ? "bg-primary/10 text-primary border-primary/20"
+                          : "bg-muted text-muted-foreground"
+                      }`}
                     >
                       {product.active ? "Active" : "Inactive"}
                     </Badge>
                     {product.featured && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge className="bg-accent/10 text-accent border-accent/20 text-xs font-medium px-2 py-0.5">
                         Featured
                       </Badge>
                     )}
@@ -209,11 +214,12 @@ export function StoreManager({ ownerAddress, displayName }: StoreManagerProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleToggleProduct(product._id, product.active)}
+                    className="w-8 h-8 p-0 hover:bg-muted rounded-lg"
                   >
                     {product.active ? (
                       <EyeOff className="w-4 h-4" />
@@ -225,7 +231,7 @@ export function StoreManager({ ownerAddress, displayName }: StoreManagerProps) {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDeleteProduct(product._id, product.name)}
-                    className="text-destructive hover:text-destructive"
+                    className="w-8 h-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>

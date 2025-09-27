@@ -184,12 +184,12 @@ export default function EnsOrAddressPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Profile Information */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4">
             {/* Description - Show from ENS or Convex database */}
             {!isEthAddress &&
               (textsLoading ? (
-                <Card className="p-6">
-                  <h2 className="text-lg font-semibold text-foreground mb-3">
+                <Card className="p-6 border-0 bg-card/50">
+                  <h2 className="text-xl font-semibold text-foreground mb-4">
                     About
                   </h2>
                   <div className="space-y-2">
@@ -200,16 +200,16 @@ export default function EnsOrAddressPage() {
                 </Card>
               ) : (
                 (ensDescription || convexProfile?.description) && (
-                  <Card className="p-6">
-                    <h2 className="text-lg font-semibold text-foreground mb-3">
+                  <Card className="p-6 border-0 bg-card/50">
+                    <h2 className="text-xl font-semibold text-foreground mb-4">
                       About
                     </h2>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground leading-relaxed">
                       {ensDescription || convexProfile?.description}
                     </p>
                     {convexProfile && (
-                      <div className="flex items-center mt-2 text-xs text-muted-foreground">
-                        <Database className="w-3 h-3 mr-1" />
+                      <div className="flex items-center mt-3 text-xs text-muted-foreground">
+                        <Database className="w-3 h-3 mr-1.5" />
                         Enhanced profile data available
                       </div>
                     )}
@@ -219,8 +219,8 @@ export default function EnsOrAddressPage() {
 
             {/* Enhanced Profile Data from Convex */}
             {convexProfile && (
-              <Card className="p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">
+              <Card className="p-6 border-0 bg-card/50">
+                <h2 className="text-xl font-semibold text-foreground mb-4">
                   Profile Details
                 </h2>
                 <div className="space-y-3">
@@ -269,8 +269,8 @@ export default function EnsOrAddressPage() {
             {/* Social Links - Only show for ENS names */}
             {!isEthAddress &&
               (isLoadingSocials ? (
-                <Card className="p-6">
-                  <h2 className="text-lg font-semibold text-foreground mb-4">
+                <Card className="p-6 border-0 bg-card/50">
+                  <h2 className="text-xl font-semibold text-foreground mb-4">
                     Links
                   </h2>
                   <div className="space-y-3">
@@ -286,8 +286,8 @@ export default function EnsOrAddressPage() {
                 </Card>
               ) : (
                 (ensTwitter || ensGithub || ensWebsite || convexProfile?.twitter || convexProfile?.github) && (
-                  <Card className="p-6">
-                    <h2 className="text-lg font-semibold text-foreground mb-4">
+                  <Card className="p-6 border-0 bg-card/50">
+                    <h2 className="text-xl font-semibold text-foreground mb-4">
                       Links
                     </h2>
                     <div className="space-y-3">
@@ -343,8 +343,8 @@ export default function EnsOrAddressPage() {
               ))}
 
             {/* Addresses */}
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4">
+            <Card className="p-6 border-0 bg-card/50">
+              <h2 className="text-xl font-semibold text-foreground mb-4">
                 {isEthAddress ? "Address" : "Addresses"}
               </h2>
               {addressesLoading ? (
@@ -449,8 +449,8 @@ export default function EnsOrAddressPage() {
 
           {/* Payment Section */}
           <div className="lg:col-span-1">
-            <Card className="p-6 sticky top-4">
-              <h2 className="text-lg font-semibold text-foreground mb-6 text-center">
+            <Card className="p-6 sticky top-4 border-0 bg-card/50">
+              <h2 className="text-xl font-semibold text-foreground mb-6 text-center">
                 Send Payment
               </h2>
 
@@ -476,7 +476,7 @@ export default function EnsOrAddressPage() {
                   <Button
                     onClick={handlePay}
                     size="lg"
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                    className="w-full rounded-full bg-foreground text-background hover:opacity-90 font-semibold py-3"
                     type="button"
                   >
                     {isConnected ? (

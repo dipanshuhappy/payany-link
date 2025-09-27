@@ -373,8 +373,7 @@ export function AddProductButton({
   return (
     <Button
       onClick={handleAddProduct}
-      size="sm"
-      className="mb-4"
+      className="rounded-full bg-foreground text-background hover:opacity-90 font-medium px-4 py-2"
     >
       <Plus className="w-4 h-4 mr-2" />
       Add Product
