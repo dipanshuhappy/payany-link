@@ -7,7 +7,6 @@ import { Check } from "lucide-react";
 export type Chain = {
   id: number;
   name: string;
-  logo: string;
   nativeCurrency: string;
 };
 
@@ -19,33 +18,18 @@ interface ChainSelectionProps {
 
 export const CHAINS: Chain[] = [
   {
-    id: 1,
-    name: "Ethereum",
-    logo: "https://cryptologos.cc/logos/ethereum-eth-logo.svg",
-    nativeCurrency: "ETH",
-  },
-  {
     id: 137,
     name: "Polygon",
-    logo: "https://cryptologos.cc/logos/polygon-matic-logo.svg",
     nativeCurrency: "MATIC",
-  },
-  {
-    id: 8453,
-    name: "Base",
-    logo: "https://cryptologos.cc/logos/coinbase-coin-logo.svg",
-    nativeCurrency: "ETH",
   },
   {
     id: 42161,
     name: "Arbitrum",
-    logo: "https://cryptologos.cc/logos/arbitrum-arb-logo.svg",
     nativeCurrency: "ETH",
   },
   {
-    id: 10,
-    name: "Optimism",
-    logo: "https://cryptologos.cc/logos/optimism-ethereum-op-logo.svg",
+    id: 8453,
+    name: "Base",
     nativeCurrency: "ETH",
   },
 ];
@@ -69,14 +53,9 @@ export default function ChainSelection({
             }`}
             onClick={() => onChainSelect(chain)}
           >
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <img
-                src={chain.logo}
-                alt={chain.name}
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full"
-              />
-              <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm sm:text-base truncate">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h4 className="font-medium text-sm sm:text-base">
                   {chain.name}
                 </h4>
                 <p className="text-xs sm:text-sm text-muted-foreground">

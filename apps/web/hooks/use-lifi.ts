@@ -1,28 +1,26 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getRoutes,
   executeRoute,
-  getStatus,
-  getTokens,
-  RoutesRequest,
-  Route,
-  Token,
-  ChainType,
-  Substatus,
+  type Route,
+  type RoutesRequest,
 } from "@lifi/sdk";
-import { useAccount, useWalletClient } from "wagmi";
-import { useState, useCallback } from "react";
+import { useAccount } from "wagmi";
 import { toast } from "sonner";
-import { lifiConfig } from "@/components/providers";
 
-export interface UseLifiOptions {
-  fromChainId?: number;
-  toChainId?: number;
-  fromTokenAddress?: string;
-  toTokenAddress?: string;
-  fromAmount?: string;
+export interface LifiRouteParams {
+  fromChainId: number;
+  toChainId: number;
+  fromTokenAddress: string;
+  toTokenAddress: string;
+  fromAmount: string;
+}
+
+export interface UseLifiQuoteOptions extends LifiRouteParams {
+  enabled?: boolean;
 }
 
 export interface LifiQuoteResult {
@@ -35,18 +33,20 @@ export interface LifiQuoteResult {
 export interface LifiExecutionResult {
   execute: (route: Route) => Promise<void>;
   isExecuting: boolean;
-  executionStatus: string | null;
+  currentStep: string | null;
   error: Error | null;
   reset: () => void;
 }
 
+// Hook for getting LI.FI routes/quotes
 export function useLifiQuote({
   fromChainId,
   toChainId,
   fromTokenAddress,
   toTokenAddress,
   fromAmount,
-}: UseLifiOptions): LifiQuoteResult {
+  enabled = true,
+}: UseLifiQuoteOptions): LifiQuoteResult {
   const { address } = useAccount();
 
   const {
@@ -56,7 +56,7 @@ export function useLifiQuote({
     refetch,
   } = useQuery({
     queryKey: [
-      "lifi-quote",
+      "lifi-routes",
       fromChainId,
       toChainId,
       fromTokenAddress,
@@ -64,46 +64,35 @@ export function useLifiQuote({
       fromAmount,
       address,
     ],
-    queryFn: async () => {
-      if (
-        !fromChainId ||
-        !toChainId ||
-        !fromTokenAddress ||
-        !toTokenAddress ||
-        !fromAmount ||
-        !address
-      ) {
-        return [];
+    queryFn: async (): Promise<Route[]> => {
+      if (!address) {
+        throw new Error("Wallet address is required");
       }
 
-      const routeRequest: RoutesRequest = {
+      const routesRequest: RoutesRequest = {
         fromChainId,
         toChainId,
         fromTokenAddress,
         toTokenAddress,
         fromAmount,
         fromAddress: address,
-        toAddress: address,
-        options: {
-          slippage: 0.03, // 3% slippage
-          order: "RECOMMENDED",
-          allowSwitchChain: true,
-        },
       };
 
-      const result = await getRoutes(routeRequest);
+      const result = await getRoutes(routesRequest);
       return result.routes || [];
     },
-    enabled: Boolean(
-      fromChainId &&
-        toChainId &&
-        fromTokenAddress &&
-        toTokenAddress &&
-        fromAmount &&
-        address,
-    ),
-    staleTime: 1000 * 30, // 30 seconds
-    refetchInterval: 1000 * 60, // 1 minute
+    enabled:
+      enabled &&
+      Boolean(
+        fromChainId &&
+          toChainId &&
+          fromTokenAddress &&
+          toTokenAddress &&
+          fromAmount &&
+          address,
+      ),
+    staleTime: 30 * 1000, // 30 seconds
+    retry: 2,
   });
 
   return {
@@ -114,10 +103,10 @@ export function useLifiQuote({
   };
 }
 
+// Hook for executing LI.FI routes
 export function useLifiExecution(): LifiExecutionResult {
-  const { data: walletClient } = useWalletClient();
   const queryClient = useQueryClient();
-  const [executionStatus, setExecutionStatus] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState<string | null>(null);
 
   const {
     mutateAsync: execute,
@@ -126,53 +115,51 @@ export function useLifiExecution(): LifiExecutionResult {
     reset,
   } = useMutation({
     mutationFn: async (route: Route) => {
-      if (!walletClient) {
-        throw new Error("Wallet not connected");
-      }
+      setCurrentStep("Starting transaction...");
 
-      setExecutionStatus(null);
-
-      // Execute the route
-      const result = await executeRoute(route, {
+      const executedRoute = await executeRoute(route, {
         updateRouteHook: (updatedRoute) => {
-          console.log("Route updated:", updatedRoute);
-          // Update the current step status
-          const currentStep = updatedRoute.steps.find(
-            (step) => step.execution?.status === "PENDING",
+          console.log("Route update:", updatedRoute);
+
+          // Find the current executing step
+          const currentStepInfo = updatedRoute.steps.find(
+            (step) =>
+              step.execution?.status === "PENDING" ||
+              step.execution?.status === "ACTION_REQUIRED",
           );
-          if (currentStep && currentStep.execution?.status) {
-            setExecutionStatus(currentStep.execution.status);
+
+          if (currentStepInfo) {
+            const stepName = currentStepInfo.action?.fromToken?.symbol
+              ? `${currentStepInfo.action.fromToken.symbol} → ${currentStepInfo.action?.toToken?.symbol}`
+              : currentStepInfo.tool;
+            setCurrentStep(`Processing ${stepName}...`);
+          } else {
+            // Check if all steps are completed
+            const completedSteps = updatedRoute.steps.filter(
+              (step) => step.execution?.status === "DONE",
+            );
+            if (completedSteps.length === updatedRoute.steps.length) {
+              setCurrentStep("Transaction completed!");
+            }
           }
         },
       });
 
-      // Poll for final status if transaction hash is available
-      if (result && route.steps.length > 0) {
-        try {
-          const finalStatus = await getStatus({
-            bridge: route.steps[0].tool,
-            fromChain: route.fromChainId,
-            toChain: route.toChainId,
-            txHash: (result as any).transactionHash || "",
-          });
-
-          if (finalStatus && finalStatus.substatus) {
-            setExecutionStatus(finalStatus.substatus as string);
-          }
-        } catch (statusError) {
-          console.warn("Failed to get transaction status:", statusError);
-        }
-      }
-
-      return result;
+      return executedRoute;
     },
     onSuccess: () => {
-      toast.success("Transaction completed successfully!");
-      // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ["lifi-quote"] });
-      queryClient.invalidateQueries({ queryKey: ["token-balances"] });
+      setCurrentStep("Success!");
+      toast.success("Bridge transaction completed successfully!");
+
+      // Invalidate related queries to refresh balances
+      queryClient.invalidateQueries({ queryKey: ["lifi-routes"] });
+      queryClient.invalidateQueries({ queryKey: ["token-balance"] });
+
+      // Reset step after success
+      setTimeout(() => setCurrentStep(null), 3000);
     },
     onError: (error: Error) => {
+      setCurrentStep(null);
       toast.error(`Transaction failed: ${error.message}`);
       console.error("LI.FI execution error:", error);
     },
@@ -190,123 +177,104 @@ export function useLifiExecution(): LifiExecutionResult {
     [execute],
   );
 
+  const handleReset = useCallback(() => {
+    reset();
+    setCurrentStep(null);
+  }, [reset]);
+
   return {
     execute: handleExecute,
     isExecuting,
-    executionStatus,
+    currentStep,
     error: error as Error | null,
-    reset: () => {
-      reset();
-      setExecutionStatus(null);
-    },
+    reset: handleReset,
   };
 }
 
-export function useLifiTokens(chainId?: number) {
-  const {
-    data: tokens = [],
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["lifi-tokens", chainId],
-    queryFn: async () => {
-      if (!chainId) return [];
-
-      const result = await getTokens({
-        chains: [chainId],
-        chainTypes: [ChainType.EVM],
-      });
-
-      return result.tokens[chainId] || [];
-    },
-    enabled: Boolean(chainId),
-    staleTime: 1000 * 60 * 10, // 10 minutes
-  });
+// Combined hook for both quote and execution
+export function useLifi(params: LifiRouteParams) {
+  const quote = useLifiQuote(params);
+  const execution = useLifiExecution();
 
   return {
-    tokens,
-    isLoading,
-    error: error as Error | null,
+    // Quote functionality
+    routes: quote.routes,
+    isLoading: quote.isLoading,
+    error: quote.error,
+    refetch: quote.refetch,
+
+    // Execution functionality
+    execute: execution.execute,
+    isExecuting: execution.isExecuting,
+    currentStep: execution.currentStep,
+    executionError: execution.error,
+    resetExecution: execution.reset,
   };
 }
 
+// Utility functions
+export function getBestRoute(routes: Route[]): Route | null {
+  if (!routes || routes.length === 0) return null;
+
+  // Return the first route (LI.FI returns routes sorted by recommendation)
+  return routes[0];
+}
+
+export function getRouteEstimates(route: Route) {
+  const totalTime = route.steps.reduce(
+    (sum, step) => sum + (step.estimate?.executionDuration || 0),
+    0,
+  );
+
+  return {
+    executionTimeSeconds: totalTime,
+    executionTimeMinutes: Math.ceil(totalTime / 60),
+    gasCostUSD: route.gasCostUSD,
+    fromAmount: route.fromAmount,
+    toAmount: route.toAmount,
+    toAmountMin: route.toAmountMin,
+    tools: route.steps.map((step) => step.tool).join(" → "),
+  };
+}
+
+// Simple hook for same-chain swaps
 export function useLifiSwap({
-  fromChainId,
+  chainId,
   fromTokenAddress,
   toTokenAddress,
   fromAmount,
-}: Omit<UseLifiOptions, "toChainId">): LifiQuoteResult {
-  return useLifiQuote({
-    fromChainId,
-    toChainId: fromChainId, // Same chain swap
+}: {
+  chainId: number;
+  fromTokenAddress: string;
+  toTokenAddress: string;
+  fromAmount: string;
+}) {
+  return useLifi({
+    fromChainId: chainId,
+    toChainId: chainId, // Same chain
     fromTokenAddress,
     toTokenAddress,
     fromAmount,
   });
 }
 
+// Simple hook for cross-chain bridging (same token)
 export function useLifiBridge({
   fromChainId,
   toChainId,
   tokenAddress,
   fromAmount,
 }: {
-  fromChainId?: number;
-  toChainId?: number;
-  tokenAddress?: string;
-  fromAmount?: string;
-}): LifiQuoteResult {
-  return useLifiQuote({
+  fromChainId: number;
+  toChainId: number;
+  tokenAddress: string;
+  fromAmount: string;
+}) {
+  return useLifi({
     fromChainId,
     toChainId,
     fromTokenAddress: tokenAddress,
-    toTokenAddress: tokenAddress, // Same token bridge
+    toTokenAddress: tokenAddress, // Same token
     fromAmount,
   });
-}
-
-// Helper function to get the best route from results
-export function getBestRoute(routes: Route[]): Route | null {
-  if (!routes.length) return null;
-
-  // Sort by total time and gas cost
-  return routes.reduce((best, current) => {
-    const bestTime = best.steps.reduce(
-      (sum, step) => sum + (step.estimate?.executionDuration || 0),
-      0,
-    );
-    const currentTime = current.steps.reduce(
-      (sum, step) => sum + (step.estimate?.executionDuration || 0),
-      0,
-    );
-
-    const bestGasCost = parseFloat(best.gasCostUSD || "0");
-    const currentGasCost = parseFloat(current.gasCostUSD || "0");
-
-    // Prefer lower gas cost, then lower time
-    if (currentGasCost < bestGasCost) return current;
-    if (currentGasCost === bestGasCost && currentTime < bestTime)
-      return current;
-
-    return best;
-  });
-}
-
-// Helper function to format route information
-export function formatRouteInfo(route: Route) {
-  const totalTime = route.steps.reduce(
-    (sum, step) => sum + (step.estimate?.executionDuration || 0),
-    0,
-  );
-
-  const tools = route.steps.map((step) => step.tool).join(" → ");
-
-  return {
-    totalTimeMinutes: Math.ceil(totalTime / 60),
-    tools,
-    gasCostUSD: route.gasCostUSD,
-    fromAmount: route.fromAmount,
-    toAmount: route.toAmount,
-    toAmountMin: route.toAmountMin,
-  };
 }

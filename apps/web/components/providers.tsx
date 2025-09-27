@@ -3,7 +3,7 @@
 import * as React from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
-import { WagmiProvider } from "wagmi";
+import { CustomWagmiProvider } from "components/CustomWagmiProvider";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { Toaster } from "@workspace/ui/components/sonner";
 import { config } from "@/lib/wagmi";
@@ -17,14 +17,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
       disableTransitionOnChange
       enableColorScheme
     >
-      <WagmiProvider config={config}>
-        <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <CustomWagmiProvider>
           <RainbowKitProvider>
             {children}
             <Toaster />
           </RainbowKitProvider>
-        </QueryClientProvider>
-      </WagmiProvider>
+        </CustomWagmiProvider>
+      </QueryClientProvider>
     </NextThemesProvider>
   );
 }

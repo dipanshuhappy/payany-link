@@ -1,6 +1,6 @@
 "use client";
-"4c45c2ee-0be4-440b-a0e5-38ddf0fb19e6.7044c53d-24e1-47ee-a7c6-0ebdbe675364";
-"payany-link";
+// "4c45c2ee-0be4-440b-a0e5-38ddf0fb19e6.7044c53d-24e1-47ee-a7c6-0ebdbe675364";
+// "payany-link";
 import React from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
@@ -15,11 +15,12 @@ import { Separator } from "@workspace/ui/components/separator";
 import { useParams } from "next/navigation";
 import { useEnsTexts } from "@/hooks/use-ens-texts";
 import { useEnsAllAddresses } from "@/hooks/use-ens-all-addresses";
-import { useEnsAvatar, useEnsName } from "wagmi";
+import { useAccount, useConnect, useEnsAvatar, useEnsName } from "wagmi";
 import { isAddress } from "viem";
 import { useState } from "react";
-import { Copy, Check, ExternalLink } from "lucide-react";
+import { Copy, Check, ExternalLink, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import PaymentModal from "@/components/PaymentModal";
 
 export default function EnsOrAddressPage() {
@@ -27,6 +28,9 @@ export default function EnsOrAddressPage() {
   const decodedParam = decodeURIComponent(ens_or_address as string);
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+  // RainbowKit connect modal
+  const { openConnectModal } = useConnectModal();
 
   // Check if it's an address or ENS name
   const isEthAddress = isAddress(decodedParam);
@@ -61,6 +65,10 @@ export default function EnsOrAddressPage() {
     useEnsAllAddresses({
       name: ensNameToUse || "",
     });
+  const { address } = useAccount();
+
+  // Get wallet connection status from useAccount hook (address is already destructured above)
+  const isConnected = !!address;
 
   const displayName = isEnsName ? decodedParam : ensName || decodedParam;
   const displayAddress = isEthAddress ? decodedParam : undefined;
@@ -82,7 +90,11 @@ export default function EnsOrAddressPage() {
     : textsLoading;
 
   const handlePay = () => {
-    setIsPaymentModalOpen(true);
+    if (isConnected) {
+      setIsPaymentModalOpen(true);
+    } else {
+      openConnectModal?.();
+    }
   };
 
   const copyToClipboard = async (text: string) => {
@@ -378,12 +390,22 @@ export default function EnsOrAddressPage() {
                     onClick={handlePay}
                     size="lg"
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                    type="button"
                   >
-                    PAY
+                    {isConnected ? (
+                      "PAY"
+                    ) : (
+                      <>
+                        <Wallet className="w-4 h-4 mr-2" />
+                        Connect Wallet to Pay
+                      </>
+                    )}
                   </Button>
 
                   <p className="text-xs text-muted-foreground text-center">
-                    Secure payments powered by blockchain technology
+                    {isConnected
+                      ? "Secure payments powered by blockchain technology"
+                      : "Connect your wallet to start sending payments"}
                   </p>
                 </div>
               </div>
@@ -394,7 +416,9 @@ export default function EnsOrAddressPage() {
 
       <PaymentModal
         isOpen={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
+        onClose={() => {
+          setIsPaymentModalOpen(false);
+        }}
         recipient={displayName}
         recipientAddress={isEthAddress ? decodedParam : displayAddress}
       />

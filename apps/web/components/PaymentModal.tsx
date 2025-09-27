@@ -13,11 +13,7 @@ import { ChevronLeft, ChevronRight, Check, Loader2 } from "lucide-react";
 import ChainSelection, { CHAINS, Chain } from "./ChainSelection";
 import TokenSelection, { TOKENS, Token } from "./TokenSelection";
 import PaymentConfirmation from "./PaymentConfirmation";
-import {
-  useLifiQuote,
-  useLifiExecution,
-  useLifiTokens,
-} from "@/hooks/use-lifi";
+import { useLifi, getBestRoute, getRouteEstimates } from "@/hooks/use-lifi";
 import { useAccount, useBalance } from "wagmi";
 import { formatUnits, parseUnits } from "viem";
 import { toast } from "sonner";
@@ -43,35 +39,31 @@ export default function PaymentModal({
 
   const { address, chainId: currentChainId } = useAccount();
 
-  // Get tokens for selected chain using LI.FI
-  const { tokens: lifiTokens, isLoading: tokensLoading } = useLifiTokens(
-    selectedChain?.id,
-  );
-
-  // Get cross-chain route quote
-  const { routes, isLoading: routesLoading } = useLifiQuote({
-    fromChainId: currentChainId,
-    toChainId: selectedChain?.id,
+  // LI.FI integration for cross-chain payments
+  const {
+    routes,
+    isLoading: routesLoading,
+    execute,
+    isExecuting,
+    currentStep: executionStep,
+    executionError,
+    refetch: refetchRoutes,
+  } = useLifi({
+    fromChainId: currentChainId || 1,
+    toChainId: selectedChain?.id || 1,
     fromTokenAddress:
       selectedToken?.address === "native"
         ? "0x0000000000000000000000000000000000000000"
-        : selectedToken?.address,
+        : selectedToken?.address || "",
     toTokenAddress:
       selectedToken?.address === "native"
         ? "0x0000000000000000000000000000000000000000"
-        : selectedToken?.address,
-    fromAmount: amount
-      ? parseUnits(amount, selectedToken?.decimals || 18).toString()
-      : undefined,
+        : selectedToken?.address || "",
+    fromAmount:
+      amount && selectedToken
+        ? parseUnits(amount, selectedToken.decimals || 18).toString()
+        : "0",
   });
-
-  // LI.FI execution
-  const {
-    execute,
-    isExecuting,
-    executionStatus,
-    error: executionError,
-  } = useLifiExecution();
 
   // Get user's balance for selected token
   const { data: balance } = useBalance({
@@ -112,13 +104,13 @@ export default function PaymentModal({
     setIsProcessingPayment(true);
 
     try {
-      // Use the best route (first one is usually recommended)
-      const bestRoute = routes[0];
+      // Get the best route from LI.FI
+      const bestRoute = getBestRoute(routes);
       if (!bestRoute) {
-        throw new Error("No route available");
+        throw new Error("No route available for this payment");
       }
 
-      // Execute the LI.FI route
+      // Execute the cross-chain route
       await execute(bestRoute);
 
       toast.success("Payment sent successfully!");
@@ -133,34 +125,12 @@ export default function PaymentModal({
     }
   };
 
-  // Update tokens when chain changes
+  // Reset selection when chain changes
   useEffect(() => {
-    if (selectedChain && lifiTokens.length > 0) {
-      // Merge LI.FI tokens with static tokens for better coverage
-      const chainTokens = TOKENS[selectedChain.id] || [];
-      const mergedTokens = [...chainTokens];
-
-      // Add LI.FI tokens that aren't already in our static list
-      lifiTokens.forEach((lifiToken) => {
-        const exists = chainTokens.some(
-          (token) =>
-            token.address.toLowerCase() === lifiToken.address.toLowerCase(),
-        );
-        if (!exists) {
-          mergedTokens.push({
-            address: lifiToken.address,
-            symbol: lifiToken.symbol,
-            name: lifiToken.name,
-            decimals: lifiToken.decimals,
-            logo:
-              lifiToken.logoURI ||
-              `https://cryptologos.cc/logos/${lifiToken.symbol.toLowerCase()}-logo.svg`,
-            balance: "0.00", // We'll get real balance separately
-          });
-        }
-      });
+    if (selectedChain) {
+      setSelectedToken(null); // Reset token when chain changes
     }
-  }, [selectedChain, lifiTokens]);
+  }, [selectedChain]);
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center space-x-2 sm:space-x-4 mb-6">
@@ -247,7 +217,7 @@ export default function PaymentModal({
                   </div>
                 )}
 
-                {routes.length > 0 && !routesLoading && (
+                {routes.length > 0 && !routesLoading && selectedToken && (
                   <div className="bg-muted/30 rounded-lg p-4">
                     <h4 className="font-medium mb-2 flex items-center">
                       <span>Cross-chain Route</span>
@@ -255,40 +225,49 @@ export default function PaymentModal({
                         LI.FI
                       </Badge>
                     </h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          Estimated time:
-                        </span>
-                        <span>
-                          {Math.ceil(
-                            (routes[0]?.steps.reduce(
-                              (sum, step) =>
-                                sum + (step.estimate?.executionDuration || 0),
-                              0,
-                            ) || 0) / 60,
-                          )}{" "}
-                          minutes
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Gas cost:</span>
-                        <span>${routes[0]?.gasCostUSD || "0.00"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          You will receive:
-                        </span>
-                        <span className="font-medium">
-                          {routes[0] &&
-                            formatUnits(
-                              BigInt(routes[0].toAmount),
-                              selectedToken?.decimals || 18,
-                            )}{" "}
-                          {selectedToken?.symbol}
-                        </span>
-                      </div>
-                    </div>
+                    {(() => {
+                      const bestRoute = getBestRoute(routes);
+                      if (!bestRoute) return null;
+
+                      const estimates = getRouteEstimates(bestRoute);
+
+                      return (
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Estimated time:
+                            </span>
+                            <span>
+                              {estimates.executionTimeMinutes} minutes
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Gas cost:
+                            </span>
+                            <span>${estimates.gasCostUSD || "0.00"}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Tools:
+                            </span>
+                            <span className="text-xs">{estimates.tools}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              You will receive:
+                            </span>
+                            <span className="font-medium">
+                              {formatUnits(
+                                BigInt(estimates.toAmount),
+                                selectedToken.decimals || 18,
+                              )}{" "}
+                              {selectedToken.symbol}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 
@@ -304,10 +283,21 @@ export default function PaymentModal({
                     </div>
                   )}
 
-                {executionStatus && (
+                {executionStep && (
                   <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                      Transaction status: {executionStatus || "Processing..."}
+                    <div className="flex items-center space-x-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                        {executionStep}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {executionError && (
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                    <p className="text-sm text-red-700 dark:text-red-300">
+                      Error: {executionError.message}
                     </p>
                   </div>
                 )}
