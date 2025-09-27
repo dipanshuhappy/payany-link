@@ -7,6 +7,7 @@ import { CustomWagmiProvider } from "components/CustomWagmiProvider";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { Toaster } from "@workspace/ui/components/sonner";
 import { config } from "@/lib/wagmi";
+import ConvexProviderWrapper from "./providers/convex-provider";
 const queryClient = new QueryClient();
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -17,14 +18,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
       disableTransitionOnChange
       enableColorScheme
     >
-      <QueryClientProvider client={queryClient}>
-        <CustomWagmiProvider>
+        <ConvexProviderWrapper>
+        <QueryClientProvider client={queryClient}>
+          <CustomWagmiProvider>
           <RainbowKitProvider>
-            {children}
-            <Toaster />
-          </RainbowKitProvider>
-        </CustomWagmiProvider>
+              {children}
+              <Toaster />
+            </RainbowKitProvider>
+          </CustomWagmiProvider>
       </QueryClientProvider>
+        </ConvexProviderWrapper>
     </NextThemesProvider>
   );
 }
