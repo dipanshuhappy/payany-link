@@ -249,7 +249,7 @@ export function useAlchemyBalances(chainId?: number, enabled: boolean = true) {
 
         const tokenResults = await Promise.all(tokenPromises);
         const validTokens = tokenResults.filter(
-          (token): token is TokenWithBalance => token !== null,
+          (token): token is any => token !== null,
         );
 
         tokens.push(...validTokens);
