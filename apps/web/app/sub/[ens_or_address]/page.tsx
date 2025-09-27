@@ -24,6 +24,8 @@ import { Copy, Check, ExternalLink, Calendar, Database, Wallet } from "lucide-re
 import { toast } from "sonner";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import PaymentModal from "@/components/PaymentModal";
+import { StoreSection } from "@/components/StoreSection";
+import { StoreManager } from "@/components/StoreManager";
 
 export default function EnsOrAddressPage() {
   const { ens_or_address } = useParams();
@@ -76,6 +78,7 @@ export default function EnsOrAddressPage() {
     api.ensProfiles.getProfileByDomain,
     ensNameToUse ? { domain_name: ensNameToUse } : "skip"
   );
+
 
   const displayName = isEnsName ? decodedParam : ensName || decodedParam;
   const displayAddress = isEthAddress ? decodedParam : undefined;
@@ -422,6 +425,18 @@ export default function EnsOrAddressPage() {
                 </div>
               )}
             </Card>
+
+            {/* Store Section */}
+            <StoreSection
+              ownerAddress={isEthAddress ? decodedParam : allAddresses?.[0]?.address || ""}
+              displayName={displayName}
+            />
+
+            {/* Store Manager - only visible to owner */}
+            <StoreManager
+              ownerAddress={isEthAddress ? decodedParam : allAddresses?.[0]?.address || ""}
+              displayName={displayName}
+            />
           </div>
 
           {/* Payment Section */}
