@@ -70,14 +70,7 @@ export function ENSSearch() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4 space-y-6">
-      <div className="text-center space-y-4">
-        <h1 className="text-3xl font-bold">ENS Profile Search</h1>
-        <p className="text-muted-foreground">
-          Search for ENS profiles by name, description, or social accounts
-        </p>
-      </div>
-
+    <div className="w-full space-y-6">
       <div className="flex gap-2">
         <Input
           placeholder="Search ENS profiles (e.g., 'DeFi developer', 'vitalik', 'ethereum')"
