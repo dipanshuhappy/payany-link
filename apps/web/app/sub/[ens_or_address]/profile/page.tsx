@@ -12,7 +12,6 @@ import { Label } from "@workspace/ui/components/label";
 import { Badge } from "@workspace/ui/components/badge";
 import { Switch } from "@workspace/ui/components/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
-import { Separator } from "@workspace/ui/components/separator";
 import { toast } from "sonner";
 import { ArrowLeft, Shield, Wallet, CreditCard, AlertCircle, CheckCircle } from "lucide-react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
