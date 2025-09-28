@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, Suspense } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
@@ -40,13 +40,13 @@ interface FileUpload {
   url?: string;
 }
 
-export default function CreateProductPage() {
+function CreateProductForm() {
   const { address } = useAccount();
   const router = useRouter();
   const searchParams = useSearchParams();
   const ownerAddress = searchParams.get("owner") || address || "";
 
-  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const generateUploadUrl = useMutation(api.files.createUploadUrl);
   const storeFileMetadata = useMutation(api.files.storeFileMetadata);
   const createProduct = useMutation(api.products.createProduct);
 
@@ -632,5 +632,13 @@ export default function CreateProductPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function CreateProductPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CreateProductForm />
+    </Suspense>
   );
 }

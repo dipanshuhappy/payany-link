@@ -8,16 +8,12 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
-import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
-import { Textarea } from "@workspace/ui/components/textarea";
 import { Badge } from "@workspace/ui/components/badge";
 import { Switch } from "@workspace/ui/components/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
-import { Separator } from "@workspace/ui/components/separator";
 import { toast } from "sonner";
-import { ArrowLeft, Save, User, Settings, Shield, Wallet, Globe, Twitter, Send } from "lucide-react";
+import { ArrowLeft, Shield, Wallet, CreditCard, AlertCircle, CheckCircle } from "lucide-react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 const CHAIN_OPTIONS = [
@@ -57,34 +53,16 @@ export default function ProfilePage() {
   const toggleFiatEnabled = useMutation(api.users.toggleFiatEnabled);
   const updatePreferredCurrency = useMutation(api.users.updatePreferredCurrency);
   const updatePreferredChain = useMutation(api.users.updatePreferredChain);
-  const updateProfileSettings = useMutation(api.users.updateProfileSettings);
+  const updateKycStatus = useMutation(api.users.updateKycStatus);
 
   // Form state
-  const [profileForm, setProfileForm] = useState({
-    display_name: "",
-    bio: "",
-    website: "",
-    twitter: "",
-    discord: "",
-    telegram: "",
-  });
-
   const [preferredCurrency, setPreferredCurrency] = useState<"ETH" | "USDC" | "USDT">("USDC");
   const [preferredChainId, setPreferredChainId] = useState(1);
   const [fiatEnabled, setFiatEnabled] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   // Initialize form with user data
   useEffect(() => {
     if (userQuery) {
-      setProfileForm({
-        display_name: userQuery.profile_settings?.display_name || "",
-        bio: userQuery.profile_settings?.bio || "",
-        website: userQuery.profile_settings?.website || "",
-        twitter: userQuery.profile_settings?.twitter || "",
-        discord: userQuery.profile_settings?.discord || "",
-        telegram: userQuery.profile_settings?.telegram || "",
-      });
       setPreferredCurrency(userQuery.preferred_currency || "USDC");
       setPreferredChainId(userQuery.preferred_chain_id || 1);
       setFiatEnabled(userQuery.fiat_enabled || false);
@@ -96,7 +74,7 @@ export default function ProfilePage() {
     if (isConnected && address && !userQuery) {
       createOrUpdateUser({
         wallet_address: address,
-        ens_name: isEnsName ? decodedParam : ensName,
+        ens_name: isEnsName ? decodedParam : ensName as string,
       });
     }
   }, [isConnected, address, userQuery, createOrUpdateUser, isEnsName, decodedParam, ensName]);
@@ -105,24 +83,6 @@ export default function ProfilePage() {
   const isOwner = address &&
     (isEthAddress ? address.toLowerCase() === decodedParam.toLowerCase() :
      userQuery?.ens_names?.includes(decodedParam));
-
-  const handleSaveProfile = async () => {
-    if (!address) return;
-
-    setIsLoading(true);
-    try {
-      await updateProfileSettings({
-        wallet_address: address,
-        profile_settings: profileForm,
-      });
-      toast.success("Profile updated successfully!");
-    } catch (error) {
-      toast.error("Failed to update profile");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleCurrencyChange = async (currency: "ETH" | "USDC" | "USDT") => {
     if (!address) return;
@@ -173,6 +133,23 @@ export default function ProfilePage() {
     }
   };
 
+  const handleStartKyc = async () => {
+    if (!address) return;
+
+    try {
+      await updateKycStatus({
+        wallet_address: address,
+        kyc_status: "approved",
+      });
+      toast.success("KYC verification completed!");
+      // Refresh user data
+      window.location.reload();
+    } catch (error) {
+      toast.error("Failed to complete KYC");
+      console.error(error);
+    }
+  };
+
   if (!isConnected) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -207,9 +184,11 @@ export default function ProfilePage() {
     );
   }
 
+  const kycApproved = userQuery?.kyc_status === "approved";
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-4 max-w-4xl">
+      <div className="container mx-auto p-4 max-w-3xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-8 pt-8">
           <div className="flex items-center space-x-4">
@@ -221,278 +200,147 @@ export default function ProfilePage() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
-            <h1 className="text-3xl font-bold">Profile Settings</h1>
+            <h1 className="text-3xl font-bold">Payment Settings</h1>
           </div>
           <Badge variant="outline" className="text-sm">
             {decodedParam}
           </Badge>
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="profile">
-              <User className="w-4 h-4 mr-2" />
-              Profile
-            </TabsTrigger>
-            <TabsTrigger value="payments">
-              <Wallet className="w-4 h-4 mr-2" />
-              Payments
-            </TabsTrigger>
-            <TabsTrigger value="kyc">
-              <Shield className="w-4 h-4 mr-2" />
-              KYC & Features
-            </TabsTrigger>
-          </TabsList>
+        <div className="space-y-6">
+          {/* Payment Methods Card */}
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-6">Payment Methods</h2>
 
-          {/* Profile Tab */}
-          <TabsContent value="profile" className="space-y-6">
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Public Profile</h2>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="display_name">Display Name</Label>
-                  <Input
-                    id="display_name"
-                    value={profileForm.display_name}
-                    onChange={(e) => setProfileForm({ ...profileForm, display_name: e.target.value })}
-                    placeholder="Enter your display name"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="bio">Bio</Label>
-                  <Textarea
-                    id="bio"
-                    value={profileForm.bio}
-                    onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
-                    placeholder="Tell us about yourself"
-                    rows={4}
-                  />
-                </div>
-
-                <Separator />
-
-                <h3 className="text-lg font-semibold">Social Links</h3>
-
-                <div>
-                  <Label htmlFor="website">
-                    <Globe className="w-4 h-4 inline mr-2" />
-                    Website
-                  </Label>
-                  <Input
-                    id="website"
-                    type="url"
-                    value={profileForm.website}
-                    onChange={(e) => setProfileForm({ ...profileForm, website: e.target.value })}
-                    placeholder="https://example.com"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="twitter">
-                    <Twitter className="w-4 h-4 inline mr-2" />
-                    Twitter
-                  </Label>
-                  <Input
-                    id="twitter"
-                    value={profileForm.twitter}
-                    onChange={(e) => setProfileForm({ ...profileForm, twitter: e.target.value })}
-                    placeholder="@username"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="discord">
-                    Discord
-                  </Label>
-                  <Input
-                    id="discord"
-                    value={profileForm.discord}
-                    onChange={(e) => setProfileForm({ ...profileForm, discord: e.target.value })}
-                    placeholder="username#1234"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="telegram">
-                    <Send className="w-4 h-4 inline mr-2" />
-                    Telegram
-                  </Label>
-                  <Input
-                    id="telegram"
-                    value={profileForm.telegram}
-                    onChange={(e) => setProfileForm({ ...profileForm, telegram: e.target.value })}
-                    placeholder="@username"
-                  />
-                </div>
-
-                <Button
-                  onClick={handleSaveProfile}
-                  disabled={isLoading}
-                  className="w-full"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {isLoading ? "Saving..." : "Save Profile"}
-                </Button>
-              </div>
-            </Card>
-          </TabsContent>
-
-          {/* Payments Tab */}
-          <TabsContent value="payments" className="space-y-6">
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Payment Preferences</h2>
-
-              <div className="space-y-6">
-                <div>
-                  <Label htmlFor="preferred_currency">Preferred Currency</Label>
-                  <Select
-                    value={preferredCurrency}
-                    onValueChange={(value) => handleCurrencyChange(value as "ETH" | "USDC" | "USDT")}
-                  >
-                    <SelectTrigger id="preferred_currency">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CURRENCY_OPTIONS.map((currency) => (
-                        <SelectItem key={currency} value={currency}>
-                          {currency}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    This will be your default payment currency
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="preferred_chain">Preferred Chain</Label>
-                  <Select
-                    value={preferredChainId.toString()}
-                    onValueChange={handleChainChange}
-                  >
-                    <SelectTrigger id="preferred_chain">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CHAIN_OPTIONS.map((chain) => (
-                        <SelectItem key={chain.id} value={chain.id.toString()}>
-                          {chain.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Your preferred blockchain for receiving payments
-                  </p>
-                </div>
-
-                <Separator />
-
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <h3 className="font-medium mb-2">Current Settings</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Default Currency:</span>
-                      <Badge variant="outline">{preferredCurrency}</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Default Chain:</span>
-                      <Badge variant="outline">
-                        {CHAIN_OPTIONS.find(c => c.id === preferredChainId)?.name}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Crypto Payments:</span>
-                      <Badge className="bg-green-500">Enabled</Badge>
-                    </div>
+            <div className="space-y-4">
+              {/* Fiat Payments Toggle */}
+              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <CreditCard className="w-5 h-5" />
+                  <div>
+                    <h3 className="font-medium">Accept Fiat Payments</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Enable credit card and bank payments
+                    </p>
                   </div>
                 </div>
+                <Switch
+                  checked={fiatEnabled}
+                  onCheckedChange={handleFiatToggle}
+                  disabled={!kycApproved}
+                />
               </div>
-            </Card>
 
+              {/* KYC Status Warning */}
+              {!kycApproved && (
+                <div className="flex items-center justify-between p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                  <div className="flex items-start space-x-2">
+                    <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium text-yellow-800">KYC Required</p>
+                      <p className="text-muted-foreground">
+                        Complete verification to enable fiat payments
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={handleStartKyc}
+                    size="sm"
+                    variant="outline"
+                  >
+                    Start KYC
+                  </Button>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Payment Preferences Card */}
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-6">Payment Preferences</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="preferred_currency">Default Currency</Label>
+                <Select
+                  value={preferredCurrency}
+                  onValueChange={(value) => handleCurrencyChange(value as "ETH" | "USDC" | "USDT")}
+                >
+                  <SelectTrigger id="preferred_currency" className="mt-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCY_OPTIONS.map((currency) => (
+                      <SelectItem key={currency} value={currency}>
+                        {currency}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Your default payment currency
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="preferred_chain">Default Chain</Label>
+                <Select
+                  value={preferredChainId.toString()}
+                  onValueChange={handleChainChange}
+                >
+                  <SelectTrigger id="preferred_chain" className="mt-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CHAIN_OPTIONS.map((chain) => (
+                      <SelectItem key={chain.id} value={chain.id.toString()}>
+                        {chain.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Preferred blockchain for receiving
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Linked ENS Names */}
+          {userQuery?.ens_names && userQuery.ens_names.length > 0 && (
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4">Linked ENS Names</h2>
               <div className="space-y-2">
-                {userQuery?.ens_names && userQuery.ens_names.length > 0 ? (
-                  userQuery.ens_names.map((ens) => (
-                    <div key={ens} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                      <span className="font-mono">{ens}</span>
-                      <Badge variant="outline">Active</Badge>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground">No ENS names linked to this wallet</p>
-                )}
+                {userQuery.ens_names.map((ens) => (
+                  <div key={ens} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <span className="font-mono text-sm">{ens}</span>
+                    <Badge variant="outline">Active</Badge>
+                  </div>
+                ))}
               </div>
             </Card>
-          </TabsContent>
+          )}
 
-          {/* KYC Tab */}
-          <TabsContent value="kyc" className="space-y-6">
+          {/* KYC Status Card - Only show if approved */}
+          {kycApproved && (
             <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">KYC Status</h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
                   <div>
-                    <h3 className="font-medium">KYC Verification</h3>
+                    <h3 className="font-medium">KYC Verified</h3>
                     <p className="text-sm text-muted-foreground">
-                      Required for fiat payment features
+                      You can accept fiat payments
                     </p>
                   </div>
-                  <Badge variant={userQuery?.kyc_status === "approved" ? "default" : "secondary"}>
-                    {userQuery?.kyc_status || "Not Started"}
-                  </Badge>
                 </div>
-
-                {userQuery?.kyc_status !== "approved" && (
-                  <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                    <p className="text-sm">
-                      KYC verification is coming soon. Once available, you'll be able to complete
-                      verification here to unlock fiat payment features.
-                    </p>
-                  </div>
-                )}
+                <Badge className="bg-green-600 text-white">
+                  Approved
+                </Badge>
               </div>
             </Card>
-
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Feature Flags</h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                  <div>
-                    <h3 className="font-medium">Fiat Payments</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Accept traditional currency payments
-                    </p>
-                  </div>
-                  <Switch
-                    checked={fiatEnabled}
-                    onCheckedChange={handleFiatToggle}
-                    disabled={userQuery?.kyc_status !== "approved"}
-                  />
-                </div>
-
-                {userQuery?.kyc_status !== "approved" && (
-                  <p className="text-xs text-muted-foreground">
-                    Complete KYC verification to enable fiat payments
-                  </p>
-                )}
-
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                  <div>
-                    <h3 className="font-medium">Cryptocurrency Payments</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Accept crypto payments (always enabled)
-                    </p>
-                  </div>
-                  <Badge className="bg-green-500">Enabled</Badge>
-                </div>
-              </div>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
     </div>
   );

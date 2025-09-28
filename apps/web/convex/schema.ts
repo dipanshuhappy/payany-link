@@ -161,18 +161,6 @@ export default defineSchema({
 
     preferred_chain_id: v.number(), // 1 for Ethereum, 8453 for Base, 137 for Polygon, etc.
 
-    // Profile settings
-    profile_settings: v.optional(
-      v.object({
-        display_name: v.optional(v.string()),
-        bio: v.optional(v.string()),
-        website: v.optional(v.string()),
-        twitter: v.optional(v.string()),
-        discord: v.optional(v.string()),
-        telegram: v.optional(v.string()),
-      }),
-    ),
-
     // Timestamps
     created_at: v.number(),
     updated_at: v.number(),
