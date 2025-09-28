@@ -88,7 +88,7 @@ export const DynamicSuffixSearchBar: React.FC<DynamicSuffixSearchBarProps> = ({
           // Get database results
           const results = await searchAction({ query, limit: 4 }); // Reduce to 4 to make room for direct ENS
           const dbResults = (results.profiles || []).filter(profile =>
-            !combinedResults.some(direct => direct.domain_name === profile.domain_name)
+            profile && !combinedResults.some(direct => direct.domain_name === profile.domain_name)
           );
 
           setSearchSuggestions([...combinedResults, ...dbResults]);
