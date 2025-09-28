@@ -64,7 +64,7 @@ export const DynamicSuffixSearchBar: React.FC<DynamicSuffixSearchBarProps> = ({
         setIsSearching(true);
         try {
           const query = userInput.trim();
-          const combinedResults = [];
+          const combinedResults: any[] = [];
 
           // If it looks like an ENS name, try to resolve it directly
           if (query.includes('.') && !isAddress(query)) {
