@@ -4,6 +4,8 @@ import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import type React from "react";
 import { useState, useEffect } from "react";
+import { useEnsTexts } from "@/hooks/use-ens-texts";
+import { isAddress } from "viem";
 // Define the component's props for reusability
 interface DynamicSuffixSearchBarProps {
   placeholderNames: string[];
@@ -24,6 +26,19 @@ export const DynamicSuffixSearchBar: React.FC<DynamicSuffixSearchBarProps> = ({
   const [charIndex, setCharIndex] = useState(0);
   const [userInput, setUserInput] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+
+  // Check if input is valid ENS name or address
+  const isValidInput = userInput.trim().length > 0;
+  const isEthAddress = isAddress(userInput.trim());
+  const isEnsName = userInput.includes(".") && !isEthAddress;
+
+  // Fetch ENS avatar if it's an ENS name
+  const { data: ensTexts } = useEnsTexts({
+    name: isEnsName ? userInput.trim() : "",
+    keys: ["avatar"],
+  });
+
+  const avatarUrl = ensTexts?.find(text => text.key === "avatar")?.value;
 
   // useEffect for the placeholder typing animation
   useEffect(() => {
@@ -86,13 +101,26 @@ export const DynamicSuffixSearchBar: React.FC<DynamicSuffixSearchBarProps> = ({
   const showAnimation = !userInput && !isFocused;
 
   return (
-    <div className="relative">
-      <div className="flex items-center gap-2 p-2 bg-card border border-border rounded-2xl shadow-2xl max-w-3xl mx-auto">
-        <div className="flex-1 flex items-center h-16 md:h-20 relative">
+    <div className="relative w-full max-w-2xl mx-auto">
+      <div className="flex items-center gap-2 p-2 bg-card border border-border rounded-xl shadow-lg">
+        <div className="flex-1 flex items-center h-14 relative">
+          {/* Profile Picture */}
+          {avatarUrl && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
+              <img
+                src={avatarUrl}
+                alt="Profile"
+                className="w-7 h-7 rounded-md object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
           {/* Animated Placeholder */}
           {showAnimation && (
             <span
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl md:text-3xl text-muted-foreground pointer-events-none"
+              className={`absolute ${avatarUrl ? 'left-12' : 'left-4'} top-1/2 -translate-y-1/2 text-lg text-muted-foreground pointer-events-none`}
               aria-hidden="true"
             >
               {displayText}
@@ -107,27 +135,27 @@ export const DynamicSuffixSearchBar: React.FC<DynamicSuffixSearchBarProps> = ({
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             placeholder={isFocused ? "Enter ENS or address" : ""}
-            className="w-full h-full pl-4 pr-2 text-2xl md:text-3xl border-0 bg-transparent text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
+            className={`w-full h-full ${avatarUrl ? 'pl-12' : 'pl-4'} pr-2 text-lg border-0 bg-transparent text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0`}
           />
 
           {/* Static Suffix UI Component */}
-          <span className="text-2xl md:text-3xl text-muted-foreground pr-4 select-none">
+          <span className="text-lg text-muted-foreground pr-4 select-none">
             {suffix}
           </span>
         </div>
 
         <Button
-          size="lg"
+          size="default"
           onClick={handlePayClick}
           disabled={!userInput.trim()}
-          className="h-12 md:h-16 px-8 md:px-12 text-lg md:text-xl font-semibold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
+          className="h-10 px-6 text-sm rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
         >
           {buttonText}
         </Button>
       </div>
 
       {/* Subtle glow effect */}
-      <div className="absolute inset-0 bg-primary/5 rounded-2xl blur-xl -z-10 scale-105" />
+      <div className="absolute inset-0 bg-primary/5 rounded-xl blur-lg -z-10 scale-105" />
     </div>
   );
 };
