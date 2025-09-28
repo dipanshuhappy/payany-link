@@ -67,8 +67,8 @@ importers:
         specifier: ^3.17.3
         version: 3.17.3(e3f4852dc31b2f2bfe6992b92b8d9b5c)
       '@paypal/react-paypal-js':
-        specifier: github:paypal/react-paypal-js
-        version: https://codeload.github.com/paypal/react-paypal-js/tar.gz/44a01f5532ca4274e5e4041e68a2ff3a95bb0f3b(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        specifier: ^8.4.0
+        version: 8.4.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@rainbow-me/rainbowkit':
         specifier: ^2.2.8
         version: 2.2.8(@tanstack/react-query@5.90.2(react@19.1.1))(@types/react@19.1.9)(babel-plugin-macros@3.1.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.9.2)(viem@2.37.8(bufferutil@4.0.9)(typescript@5.9.2)(utf-8-validate@5.0.10)(zod@4.1.11))(wagmi@2.17.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.81.4(@babel/core@7.28.4)(@types/react@19.1.9)(bufferutil@4.0.9)(react@19.1.1)(utf-8-validate@5.0.10)))(@tanstack/query-core@5.90.2)(@tanstack/react-query@5.90.2(react@19.1.1))(@types/react@19.1.9)(bufferutil@4.0.9)(react@19.1.1)(typescript@5.9.2)(utf-8-validate@5.0.10)(viem@2.37.8(bufferutil@4.0.9)(typescript@5.9.2)(utf-8-validate@5.0.10)(zod@4.1.11))(zod@4.1.11))
@@ -1532,9 +1532,8 @@ packages:
     resolution: {integrity: sha512-MaJQmSVpQb5nEeZWZDTtGRxeaHj6O51G9Olmm3zQ5E4XNgR4emAI08CKC2ZPhBldVoxAoBVjLyvKjGV5lC1n2Q==}
     engines: {node: '>=14.17.0'}
 
-  '@paypal/react-paypal-js@https://codeload.github.com/paypal/react-paypal-js/tar.gz/44a01f5532ca4274e5e4041e68a2ff3a95bb0f3b':
-    resolution: {tarball: https://codeload.github.com/paypal/react-paypal-js/tar.gz/44a01f5532ca4274e5e4041e68a2ff3a95bb0f3b}
-    version: 8.4.0
+  '@paypal/react-paypal-js@8.4.0':
+    resolution: {integrity: sha512-wTjMdR9/dq1NkoqPfpBsHsviAqdUvueE1OQu+JEvpMeJcmX6BspBfAZM+Rt2+h8b2diFM8+x0kJno6czw5/Utg==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
@@ -8243,7 +8242,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@paypal/react-paypal-js@https://codeload.github.com/paypal/react-paypal-js/tar.gz/44a01f5532ca4274e5e4041e68a2ff3a95bb0f3b(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
+  '@paypal/react-paypal-js@8.4.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
     dependencies:
       '@paypal/paypal-js': 8.4.2
       '@paypal/sdk-constants': 1.0.157
