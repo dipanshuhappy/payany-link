@@ -9,7 +9,13 @@ import {
 } from "@workspace/ui/components/dialog";
 import { Button } from "@workspace/ui/components/button";
 import { Badge } from "@workspace/ui/components/badge";
-import { ChevronLeft, ChevronRight, Check, Loader2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  Loader2,
+  CreditCard,
+} from "lucide-react";
 import ChainSelection, { CHAINS, Chain } from "./ChainSelection";
 import TokenSelection, { TOKENS, Token } from "./TokenSelection";
 import PaymentConfirmation from "./PaymentConfirmation";
@@ -21,6 +27,7 @@ import { readContract } from "wagmi/actions";
 import { config, lifiConfig } from "@/lib/wagmi";
 import { getRoutes, executeRoute } from "@lifi/sdk";
 import { getWalletClient, switchChain } from "wagmi/actions";
+import PayPalModal from "./PayPalModal";
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -46,6 +53,10 @@ export default function PaymentModal({
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const [amount, setAmount] = useState(fixedAmount || "");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"crypto" | "fiat">(
+    "crypto",
+  );
+  const [isPaypalModalOpen, setIsPaypalModalOpen] = useState(false);
 
   const { address, chainId: currentChainId } = useAccount();
 
@@ -82,6 +93,7 @@ export default function PaymentModal({
     setCurrentStep(1);
     setSelectedChain(null);
     setSelectedToken(null);
+    setPaymentMethod("crypto");
     if (mode === "pay") {
       setAmount("");
     }
@@ -143,6 +155,11 @@ export default function PaymentModal({
       setAmount(fixedAmount);
     }
   }, [mode, fixedAmount]);
+
+  const handlePayPalSelect = () => {
+    handleClose();
+    setIsPaypalModalOpen(true);
+  };
 
   // Show connect wallet message if not connected
   if (!address) {
@@ -235,13 +252,92 @@ export default function PaymentModal({
 
           <div className="min-h-[400px]">
             {currentStep === 1 && (
-              <ChainSelection
-                chains={CHAINS}
-                selectedChain={selectedChain}
-                onChainSelect={setSelectedChain}
-              />
+              <div className="space-y-4">
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-medium mb-2">
+                    Choose Payment Method
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Select how you'd like to pay
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  <button
+                    onClick={() => setPaymentMethod("crypto")}
+                    className={`p-4 rounded-lg border-2 transition-all duration-200 text-left ${
+                      paymentMethod === "crypto"
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
+                        <span className="text-orange-600 dark:text-orange-400">
+                          ₿
+                        </span>
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Pay with Crypto</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Use your crypto wallet (cross-chain supported)
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={handlePayPalSelect}
+                    className="p-4 rounded-lg border-2 transition-all duration-200 text-left border-border hover:border-primary/50"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                        <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Pay with PayPal</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Use PayPal, credit card, or bank account
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+
+                {paymentMethod === "crypto" && (
+                  <div className="mt-6">
+                    <ChainSelection
+                      chains={CHAINS}
+                      selectedChain={selectedChain}
+                      onChainSelect={setSelectedChain}
+                    />
+                  </div>
+                )}
+
+                {paymentMethod === "fiat" && (
+                  <div className="mt-6 space-y-4">
+                    <div className="bg-muted/30 rounded-lg p-4">
+                      <h4 className="font-medium mb-2">Enter Amount</h4>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-lg font-bold">$</span>
+                        <input
+                          type="number"
+                          value={amount}
+                          onChange={(e) =>
+                            mode === "pay" ? setAmount(e.target.value) : null
+                          }
+                          placeholder="0.00"
+                          className="flex-1 text-lg font-bold bg-transparent border-none outline-none"
+                          disabled={mode === "buy"}
+                        />
+                        <span className="text-muted-foreground">USD</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
-            {currentStep === 2 && (
+            {currentStep === 2 && paymentMethod === "crypto" && (
               <TokenSelection
                 selectedChain={selectedChain}
                 tokens={getTokensForChain()}
@@ -251,7 +347,7 @@ export default function PaymentModal({
                 error={tokensError}
               />
             )}
-            {currentStep === 3 && (
+            {currentStep === 3 && paymentMethod === "crypto" && (
               <div className="space-y-6">
                 <PaymentConfirmation
                   recipient={recipient}
@@ -298,38 +394,54 @@ export default function PaymentModal({
             <Button
               variant="outline"
               onClick={currentStep === 1 ? handleClose : handleBack}
-              disabled={false}
+              disabled={isProcessingPayment}
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
               {currentStep === 1 ? "Cancel" : "Back"}
             </Button>
 
-            <Button
-              onClick={currentStep === 3 ? handleConfirm : handleNext}
-              // disabled={
-              //   (currentStep === 1 && !selectedChain) ||
-              //   (currentStep === 2 && (!selectedToken || tokensLoading)) ||
-              //   (currentStep === 3 && !amount) ||
-              //   isProcessingPayment ||
-              //   !address
-              // }
-              className="bg-primary hover:bg-primary/90"
-            >
-              {isProcessingPayment ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  {currentStep === 3 ? "Confirm Payment" : "Next"}
-                  {currentStep < 3 && <ChevronRight className="w-4 h-4 ml-2" />}
-                </>
-              )}
-            </Button>
+            {/* Only show Next/Confirm for crypto payments, PayPal handles its own flow */}
+            {paymentMethod === "crypto" && (
+              <Button
+                onClick={currentStep === 3 ? handleConfirm : handleNext}
+                disabled={
+                  (currentStep === 1 && !selectedChain) ||
+                  (currentStep === 2 && (!selectedToken || tokensLoading)) ||
+                  (currentStep === 3 && !amount) ||
+                  isProcessingPayment ||
+                  !address
+                }
+                className="bg-primary hover:bg-primary/90"
+              >
+                {isProcessingPayment ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    {currentStep === 3 ? "Confirm Payment" : "Next"}
+                    {currentStep < 3 && (
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    )}
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>
+
+      {/* PayPal Modal */}
+      <PayPalModal
+        isOpen={isPaypalModalOpen}
+        onClose={() => setIsPaypalModalOpen(false)}
+        recipient={recipient}
+        recipientAddress={recipientAddress}
+        fixedAmount={fixedAmount}
+        productName={productName}
+        mode={mode}
+      />
     </Dialog>
   );
 }

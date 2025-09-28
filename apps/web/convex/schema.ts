@@ -18,7 +18,7 @@ export default defineSchema({
     .index("by_address", ["resolved_address"])
     .searchIndex("search_profiles", {
       searchField: "searchableText",
-      filterFields: ["domain_name", "resolved_address"]
+      filterFields: ["domain_name", "resolved_address"],
     }),
 
   importProgress: defineTable({
@@ -31,7 +31,7 @@ export default defineSchema({
       v.literal("in_progress"),
       v.literal("completed"),
       v.literal("failed"),
-      v.literal("paused")
+      v.literal("paused"),
     ),
     startedAt: v.number(),
     lastUpdatedAt: v.number(),
@@ -64,20 +64,22 @@ export default defineSchema({
     currency: v.string(),
 
     // Multi-chain pricing
-    prices: v.optional(v.object({
-      eth: v.optional(v.number()),
-      usdc: v.optional(v.number()),
-      matic: v.optional(v.number()),
-      sol: v.optional(v.number()),
-      btc: v.optional(v.number()),
-    })),
+    prices: v.optional(
+      v.object({
+        eth: v.optional(v.number()),
+        usdc: v.optional(v.number()),
+        matic: v.optional(v.number()),
+        sol: v.optional(v.number()),
+        btc: v.optional(v.number()),
+      }),
+    ),
 
     // Product type & files
     product_type: v.union(
       v.literal("digital_download"),
       v.literal("service"),
       v.literal("subscription"),
-      v.literal("donation")
+      v.literal("donation"),
     ),
 
     // Media & files
@@ -120,14 +122,15 @@ export default defineSchema({
     store_enabled: v.boolean(),
     accepted_tokens: v.array(v.string()),
     store_description: v.optional(v.string()),
-    social_links: v.optional(v.object({
-      twitter: v.optional(v.string()),
-      discord: v.optional(v.string()),
-      telegram: v.optional(v.string()),
-    })),
+    social_links: v.optional(
+      v.object({
+        twitter: v.optional(v.string()),
+        discord: v.optional(v.string()),
+        telegram: v.optional(v.string()),
+      }),
+    ),
     theme_color: v.optional(v.string()),
-  })
-    .index("by_owner", ["owner_address"]),
+  }).index("by_owner", ["owner_address"]),
 
   users: defineTable({
     // Core identity
@@ -135,35 +138,40 @@ export default defineSchema({
     ens_names: v.array(v.string()),
 
     // KYC Status (for future use)
-    kyc_status: v.optional(v.union(
-      v.literal("not_started"),
-      v.literal("pending"),
-      v.literal("in_progress"),
-      v.literal("approved"),
-      v.literal("rejected")
-    )),
+    kyc_status: v.optional(
+      v.union(
+        v.literal("not_started"),
+        v.literal("pending"),
+        v.literal("in_progress"),
+        v.literal("approved"),
+        v.literal("rejected"),
+      ),
+    ),
 
     // Feature flags
     fiat_enabled: v.boolean(),
+    fiat_balance: v.optional(v.number()),
 
     // Payment preferences - simplified
     preferred_currency: v.union(
       v.literal("ETH"),
       v.literal("USDC"),
-      v.literal("USDT")
+      v.literal("USDT"),
     ),
 
     preferred_chain_id: v.number(), // 1 for Ethereum, 8453 for Base, 137 for Polygon, etc.
 
     // Profile settings
-    profile_settings: v.optional(v.object({
-      display_name: v.optional(v.string()),
-      bio: v.optional(v.string()),
-      website: v.optional(v.string()),
-      twitter: v.optional(v.string()),
-      discord: v.optional(v.string()),
-      telegram: v.optional(v.string()),
-    })),
+    profile_settings: v.optional(
+      v.object({
+        display_name: v.optional(v.string()),
+        bio: v.optional(v.string()),
+        website: v.optional(v.string()),
+        twitter: v.optional(v.string()),
+        discord: v.optional(v.string()),
+        telegram: v.optional(v.string()),
+      }),
+    ),
 
     // Timestamps
     created_at: v.number(),

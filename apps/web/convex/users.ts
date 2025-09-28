@@ -12,7 +12,9 @@ export const createOrUpdateUser = mutation({
   handler: async (ctx, args) => {
     const existingUser = await ctx.db
       .query("users")
-      .withIndex("by_wallet", (q) => q.eq("wallet_address", args.wallet_address.toLowerCase()))
+      .withIndex("by_wallet", (q) =>
+        q.eq("wallet_address", args.wallet_address.toLowerCase()),
+      )
       .first();
 
     const now = Date.now();
@@ -52,7 +54,9 @@ export const getUserByWallet = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("users")
-      .withIndex("by_wallet", (q) => q.eq("wallet_address", args.wallet_address.toLowerCase()))
+      .withIndex("by_wallet", (q) =>
+        q.eq("wallet_address", args.wallet_address.toLowerCase()),
+      )
       .first();
   },
 });
@@ -76,7 +80,9 @@ export const addEnsToUser = mutation({
   handler: async (ctx, args) => {
     const user = await ctx.db
       .query("users")
-      .withIndex("by_wallet", (q) => q.eq("wallet_address", args.wallet_address.toLowerCase()))
+      .withIndex("by_wallet", (q) =>
+        q.eq("wallet_address", args.wallet_address.toLowerCase()),
+      )
       .first();
 
     if (!user) {
@@ -103,7 +109,9 @@ export const removeEnsFromUser = mutation({
   handler: async (ctx, args) => {
     const user = await ctx.db
       .query("users")
-      .withIndex("by_wallet", (q) => q.eq("wallet_address", args.wallet_address.toLowerCase()))
+      .withIndex("by_wallet", (q) =>
+        q.eq("wallet_address", args.wallet_address.toLowerCase()),
+      )
       .first();
 
     if (!user) {
@@ -111,7 +119,7 @@ export const removeEnsFromUser = mutation({
     }
 
     await ctx.db.patch(user._id, {
-      ens_names: user.ens_names.filter(name => name !== args.ens_name),
+      ens_names: user.ens_names.filter((name) => name !== args.ens_name),
       updated_at: Date.now(),
     });
 
@@ -128,13 +136,15 @@ export const updateKycStatus = mutation({
       v.literal("pending"),
       v.literal("in_progress"),
       v.literal("approved"),
-      v.literal("rejected")
+      v.literal("rejected"),
     ),
   },
   handler: async (ctx, args) => {
     const user = await ctx.db
       .query("users")
-      .withIndex("by_wallet", (q) => q.eq("wallet_address", args.wallet_address.toLowerCase()))
+      .withIndex("by_wallet", (q) =>
+        q.eq("wallet_address", args.wallet_address.toLowerCase()),
+      )
       .first();
 
     if (!user) {
@@ -159,7 +169,9 @@ export const toggleFiatEnabled = mutation({
   handler: async (ctx, args) => {
     const user = await ctx.db
       .query("users")
-      .withIndex("by_wallet", (q) => q.eq("wallet_address", args.wallet_address.toLowerCase()))
+      .withIndex("by_wallet", (q) =>
+        q.eq("wallet_address", args.wallet_address.toLowerCase()),
+      )
       .first();
 
     if (!user) {
@@ -187,13 +199,15 @@ export const updatePreferredCurrency = mutation({
     preferred_currency: v.union(
       v.literal("ETH"),
       v.literal("USDC"),
-      v.literal("USDT")
+      v.literal("USDT"),
     ),
   },
   handler: async (ctx, args) => {
     const user = await ctx.db
       .query("users")
-      .withIndex("by_wallet", (q) => q.eq("wallet_address", args.wallet_address.toLowerCase()))
+      .withIndex("by_wallet", (q) =>
+        q.eq("wallet_address", args.wallet_address.toLowerCase()),
+      )
       .first();
 
     if (!user) {
@@ -218,7 +232,9 @@ export const updatePreferredChain = mutation({
   handler: async (ctx, args) => {
     const user = await ctx.db
       .query("users")
-      .withIndex("by_wallet", (q) => q.eq("wallet_address", args.wallet_address.toLowerCase()))
+      .withIndex("by_wallet", (q) =>
+        q.eq("wallet_address", args.wallet_address.toLowerCase()),
+      )
       .first();
 
     if (!user) {
@@ -256,7 +272,9 @@ export const updateProfileSettings = mutation({
   handler: async (ctx, args) => {
     const user = await ctx.db
       .query("users")
-      .withIndex("by_wallet", (q) => q.eq("wallet_address", args.wallet_address.toLowerCase()))
+      .withIndex("by_wallet", (q) =>
+        q.eq("wallet_address", args.wallet_address.toLowerCase()),
+      )
       .first();
 
     if (!user) {
@@ -279,10 +297,7 @@ export const getAllUsers = query({
   },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 50;
-    return await ctx.db
-      .query("users")
-      .order("desc")
-      .take(limit);
+    return await ctx.db.query("users").order("desc").take(limit);
   },
 });
 
@@ -294,7 +309,7 @@ export const getUsersByKycStatus = query({
       v.literal("pending"),
       v.literal("in_progress"),
       v.literal("approved"),
-      v.literal("rejected")
+      v.literal("rejected"),
     ),
     limit: v.optional(v.number()),
   },
@@ -305,6 +320,37 @@ export const getUsersByKycStatus = query({
       .withIndex("by_kyc_status", (q) => q.eq("kyc_status", args.kyc_status))
       .order("desc")
       .take(limit);
+  },
+});
+
+// Increment fiat balance after successful payment
+export const incrementFiatBalance = mutation({
+  args: {
+    wallet_address: v.string(),
+    amount: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_wallet", (q) =>
+        q.eq("wallet_address", args.wallet_address.toLowerCase()),
+      )
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const currentBalance = user.fiat_balance || 0;
+    await ctx.db.patch(user._id, {
+      fiat_balance: currentBalance + args.amount,
+      updated_at: Date.now(),
+    });
+
+    return {
+      success: true,
+      new_balance: currentBalance + args.amount,
+    };
   },
 });
 

@@ -66,6 +66,9 @@ importers:
       '@lifi/wallet-management':
         specifier: ^3.17.3
         version: 3.17.3(e3f4852dc31b2f2bfe6992b92b8d9b5c)
+      '@paypal/react-paypal-js':
+        specifier: github:paypal/react-paypal-js
+        version: https://codeload.github.com/paypal/react-paypal-js/tar.gz/44a01f5532ca4274e5e4041e68a2ff3a95bb0f3b(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@rainbow-me/rainbowkit':
         specifier: ^2.2.8
         version: 2.2.8(@tanstack/react-query@5.90.2(react@19.1.1))(@types/react@19.1.9)(babel-plugin-macros@3.1.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.9.2)(viem@2.37.8(bufferutil@4.0.9)(typescript@5.9.2)(utf-8-validate@5.0.10)(zod@4.1.11))(wagmi@2.17.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.81.4(@babel/core@7.28.4)(@types/react@19.1.9)(bufferutil@4.0.9)(react@19.1.1)(utf-8-validate@5.0.10)))(@tanstack/query-core@5.90.2)(@tanstack/react-query@5.90.2(react@19.1.1))(@types/react@19.1.9)(bufferutil@4.0.9)(react@19.1.1)(typescript@5.9.2)(utf-8-validate@5.0.10)(viem@2.37.8(bufferutil@4.0.9)(typescript@5.9.2)(utf-8-validate@5.0.10)(zod@4.1.11))(zod@4.1.11))
@@ -1522,9 +1525,22 @@ packages:
     resolution: {integrity: sha512-IHnV6A+zxU7XwmKFinmYjUcwlyK9+xkG3/s9KcQhI9BjQKycrJ1JRO+FbNYPwZiPKW3je/DR0k7w8/gLa5eaxQ==}
     deprecated: 'The package is now available as "qr": npm install qr'
 
+  '@paypal/paypal-js@8.4.2':
+    resolution: {integrity: sha512-UbY2lvwW65KX4migWbAx8KK0TCbPdIxeHIHogpJ5Z6yta5Qd2+90rXyx8FGdp6wrcr1f/srotlxnBXvqYWyHog==}
+
   '@paypal/paypal-server-sdk@1.1.0':
     resolution: {integrity: sha512-MaJQmSVpQb5nEeZWZDTtGRxeaHj6O51G9Olmm3zQ5E4XNgR4emAI08CKC2ZPhBldVoxAoBVjLyvKjGV5lC1n2Q==}
     engines: {node: '>=14.17.0'}
+
+  '@paypal/react-paypal-js@https://codeload.github.com/paypal/react-paypal-js/tar.gz/44a01f5532ca4274e5e4041e68a2ff3a95bb0f3b':
+    resolution: {tarball: https://codeload.github.com/paypal/react-paypal-js/tar.gz/44a01f5532ca4274e5e4041e68a2ff3a95bb0f3b}
+    version: 8.4.0
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+
+  '@paypal/sdk-constants@1.0.157':
+    resolution: {integrity: sha512-BjxWT9rK6dM1AOffSpvHYY47/8BY775jgEYYiwH6eL4YaqU5Epcw7zOtwQ8L4UaEn4FCAjZ2EWxaS83dCN7SpA==}
 
   '@popperjs/core@2.11.8':
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
@@ -4252,6 +4268,9 @@ packages:
   hermes-parser@0.32.0:
     resolution: {integrity: sha512-g4nBOWFpuiTqjR3LZdRxKUkij9iyveWeuks7INEsMX741f3r9xxrOe8TeQfUxtda0eXmiIFiMQzoeSQEno33Hw==}
 
+  hi-base32@0.5.1:
+    resolution: {integrity: sha512-EmBBpvdYh/4XxsnUybsPag6VikPYnN30td+vQk+GI3qpahVEG9+gTkG0aXVxTjBqQ5T6ijbWIu77O+C5WFWsnA==}
+
   hmac-drbg@1.0.1:
     resolution: {integrity: sha512-Tti3gMqLdZfhOQY1Mzf/AanLiqh1WTiJgEj26ZuYQ9fbkLomzGchCws4FyrSd4VkpBfiNhaE1On+lOz894jvXg==}
 
@@ -5262,6 +5281,9 @@ packages:
 
   process-warning@1.0.0:
     resolution: {integrity: sha512-du4wfLyj4yCZq1VupnVSZmRsPJsNuxoDQFdCFHLaYiEbFBD7QE0a+I4D7hOxrVnh78QE/YipFAj9lXHiXocV+Q==}
+
+  promise-polyfill@8.3.0:
+    resolution: {integrity: sha512-H5oELycFml5yto/atYqmjyigJoAo3+OXwolYiH7OfQuYlAqhxNvTfiNMbV9hsC6Yp83yE5r2KTVmtrG6R9i6Pg==}
 
   promise@8.3.0:
     resolution: {integrity: sha512-rZPNPKTOYVNEEKFaq1HqTgOwZD+4/YHS5ukLzQCypkj+OkYx7iv0mA91lJlpPPZ8vMau3IIGj5Qlwrx+8iiSmg==}
@@ -8206,6 +8228,10 @@ snapshots:
 
   '@paulmillr/qr@0.2.1': {}
 
+  '@paypal/paypal-js@8.4.2':
+    dependencies:
+      promise-polyfill: 8.3.0
+
   '@paypal/paypal-server-sdk@1.1.0':
     dependencies:
       '@apimatic/authentication-adapters': 0.5.12
@@ -8216,6 +8242,17 @@ snapshots:
     transitivePeerDependencies:
       - debug
       - supports-color
+
+  '@paypal/react-paypal-js@https://codeload.github.com/paypal/react-paypal-js/tar.gz/44a01f5532ca4274e5e4041e68a2ff3a95bb0f3b(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
+    dependencies:
+      '@paypal/paypal-js': 8.4.2
+      '@paypal/sdk-constants': 1.0.157
+      react: 19.1.1
+      react-dom: 19.1.1(react@19.1.1)
+
+  '@paypal/sdk-constants@1.0.157':
+    dependencies:
+      hi-base32: 0.5.1
 
   '@popperjs/core@2.11.8': {}
 
@@ -12818,6 +12855,8 @@ snapshots:
     dependencies:
       hermes-estree: 0.32.0
 
+  hi-base32@0.5.1: {}
+
   hmac-drbg@1.0.1:
     dependencies:
       hash.js: 1.1.7
@@ -14043,6 +14082,8 @@ snapshots:
   process-nextick-args@2.0.1: {}
 
   process-warning@1.0.0: {}
+
+  promise-polyfill@8.3.0: {}
 
   promise@8.3.0:
     dependencies:

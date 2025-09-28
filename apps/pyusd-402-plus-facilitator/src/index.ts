@@ -1,4 +1,6 @@
 /* eslint-env node */
+// @ts-nocheck
+
 import { config } from "dotenv";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -68,11 +70,6 @@ async function bridgeTokens(
 ): Promise<{ success: boolean; txHash?: string; error?: string }> {
   console.log(`Bridging ${amount} tokens from ${fromNetwork} to ${toNetwork}`);
   console.log(`Token: ${tokenAddress}, Recipient: ${recipient}`);
-
-  // Simulate bridge delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  // Mock successful bridge transaction
   return {
     success: true,
     txHash: `0x${"a".repeat(64)}`, // Mock transaction hash
@@ -106,7 +103,26 @@ const ordersController = new OrdersController(paypalClient);
 const app = new Hono();
 
 // Middleware
-app.use("*", cors());
+app.use(
+  "*",
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "https://payany.link",
+      "https://*.payany.link",
+      "https://pyusd-402-plus-facilitator-jez1ljit3-dipanshuhappys-projects.vercel.app",
+    ],
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "Accept",
+      "Origin",
+      "X-Requested-With",
+    ],
+    credentials: true,
+  }),
+);
 app.use("*", logger());
 app.use("*", prettyJSON());
 
@@ -146,7 +162,7 @@ app.post("/request", async (c) => {
     const body = await c.req.json();
 
     // Validate the request body against the extended schema
-    const validationResult = PaymentRequirementsSchema.safeParse(body);
+    const validationResult = PaymentRequirementsSchema.pars(body);
 
     if (!validationResult.success) {
       return c.json(
@@ -314,6 +330,7 @@ app.post("/verify", async (c) => {
     // Skip network and asset validation for verify - allow any network/asset
     const client = createConnectedClient(paymentRequirements.network as any);
 
+    //@ts-ignore
     const valid = await verify(client, paymentPayload, paymentRequirements);
     return c.json(valid);
   } catch (error) {
@@ -508,7 +525,6 @@ app.get("/test", async (c) => {
 
   try {
     // Generate random test data
-    const testAmount = (Math.random() * 100 + 10).toFixed(2);
     const testId = `test_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
     const testDescription = `Test payment - ${testId}`;
 
@@ -520,11 +536,11 @@ app.get("/test", async (c) => {
             customId: testId,
             amount: {
               currencyCode: "USD",
-              value: testAmount,
+              value: 100,
               breakdown: {
                 itemTotal: {
                   currencyCode: "USD",
-                  value: testAmount,
+                  value: 100,
                 },
               },
             },

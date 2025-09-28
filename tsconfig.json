@@ -1,4 +1,7 @@
 {
-  "extends": "@workspace/typescript-config/base.json"
+  "extends": "@workspace/typescript-config/base.json",
+  "skipLibCheck": true,
+  "paths": {
+    "viem/*": ["./node_modules/viem/dist/*"]
+  }
 }
-
