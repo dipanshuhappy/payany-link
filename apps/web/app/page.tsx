@@ -8,7 +8,6 @@ export default function Page() {
   return (
     <>
       <div className="min-h-screen relative overflow-hidden bg-black">
-        {/* Silk Background */}
         <div className="absolute inset-0 w-full h-full">
           <Silk
             speed={3}
@@ -19,18 +18,14 @@ export default function Page() {
           />
         </div>
 
-        {/* Background Overlay for better text contrast */}
         <div className="absolute inset-0 bg-black/30 z-5"></div>
 
-        {/* Top-right Connect Button */}
         <div className="absolute top-6 right-6 z-50">
           <ConnectButton />
         </div>
 
-        {/* Hero Section */}
         <div className="relative z-10 flex items-center justify-center min-h-screen">
           <div className="text-center px-4 max-w-6xl mx-auto">
-            {/* Hero Text */}
             <div className="mb-8">
               <div className="space-y-2">
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight drop-shadow-2xl">
@@ -44,13 +39,11 @@ export default function Page() {
                 </h1>
               </div>
 
-              {/* Subtitle */}
               <p className="mt-6 text-base sm:text-lg text-white/90 max-w-2xl mx-auto leading-relaxed drop-shadow-lg">
                 Send crypto to anyone using their ENS name or wallet address
               </p>
             </div>
 
-            {/* Main CTA */}
             <div className="mb-8">
               <DynamicSuffixSearchBar
                 placeholderNames={["vitalik.eth", "jesse.base.eth"]}
@@ -62,14 +55,12 @@ export default function Page() {
               />
             </div>
 
-            {/* Additional Info */}
             <div className="text-sm text-white/70">
               No registration required • Instant transfers • Global coverage
             </div>
           </div>
         </div>
 
-        {/* Bottom fade */}
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/50 to-transparent z-5"></div>
       </div>
     </>

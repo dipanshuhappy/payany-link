@@ -67,7 +67,6 @@ function CreateProductForm() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // File upload handler
   const uploadFile = async (
     file: File,
     purpose: "product_image" | "product_file" | "preview_file",
@@ -91,10 +90,9 @@ function CreateProductForm() {
       purpose,
     });
 
-    return { storageId, url: fileMetadata.url ?? '' };
+    return { storageId, url: fileMetadata.url ?? "" };
   };
 
-  // Image upload dropzone
   const onImageDrop = useCallback(
     async (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
@@ -133,7 +131,6 @@ function CreateProductForm() {
     [ownerAddress],
   );
 
-  // Product file upload dropzone
   const onProductFileDrop = useCallback(
     async (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
@@ -247,7 +244,6 @@ function CreateProductForm() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6">
-        {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Button
             variant="ghost"
@@ -270,9 +266,7 @@ function CreateProductForm() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            {/* Main Form */}
             <div className="lg:col-span-3 space-y-6">
-              {/* Basic Information */}
               <Card className="p-6 border-0 bg-card/50">
                 <h2 className="text-xl font-semibold mb-6 text-foreground">
                   Basic Information
@@ -409,14 +403,12 @@ function CreateProductForm() {
                 </div>
               </Card>
 
-              {/* File Uploads */}
               <Card className="p-6 border-0 bg-card/50">
                 <h2 className="text-xl font-semibold mb-6 text-foreground">
                   Media & Files
                 </h2>
 
                 <div className="space-y-4">
-                  {/* Product Image */}
                   <div>
                     <Label className="text-sm font-medium text-foreground">
                       Product Image
@@ -483,7 +475,6 @@ function CreateProductForm() {
                     </div>
                   </div>
 
-                  {/* Product File */}
                   {formData.product_type === "digital_download" && (
                     <div>
                       <Label>Product File</Label>
@@ -544,7 +535,6 @@ function CreateProductForm() {
               </Card>
             </div>
 
-            {/* Preview Panel */}
             <div className="lg:col-span-1">
               <Card className="p-6 sticky top-4 border-0 bg-card/50">
                 <h2 className="text-lg font-semibold mb-4 text-foreground">
@@ -603,7 +593,6 @@ function CreateProductForm() {
             </div>
           </div>
 
-          {/* Submit */}
           <div className="flex justify-end gap-3 pt-6 border-t border-border/50">
             <Button
               type="button"

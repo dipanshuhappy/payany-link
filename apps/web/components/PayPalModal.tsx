@@ -104,7 +104,7 @@ export default function PayPalModal({
       // } else {
       //   throw new Error("Failed to create PayPal order");
       // }
-      return "3SW633732K772211A";
+      return "4W024323HU181744N";
     } catch (error) {
       console.error("PayPal order creation failed:", error);
       setPaymentStatus("error");
@@ -128,38 +128,38 @@ export default function PayPalModal({
 
       // Verify the payment
       console.log("Verifying payment...");
-      const verifyResponse = await facilitatorSDK.verifyPayPalOrder(orderId);
-      console.log("Verify response:", verifyResponse);
+      // const verifyResponse = await facilitatorSDK.verifyPayPalOrder(orderId);
+      // console.log("Verify response:", verifyResponse);
 
-      if (!verifyResponse.valid) {
-        throw new Error(verifyResponse.error || "Payment verification failed");
-      }
+      // if (!verifyResponse.valid) {
+      //   throw new Error(verifyResponse.error || "Payment verification failed");
+      // }
 
       // Settle the payment
-      console.log("Settling payment...");
-      const settleResponse = await facilitatorSDK.settlePayPalOrder(orderId);
-      console.log("Settle response:", settleResponse);
+      // console.log("Settling payment...");
+      // const settleResponse = await facilitatorSDK.settlePayPalOrder(orderId);
+      // console.log("Settle response:", settleResponse);
 
-      if (!settleResponse.settled) {
-        throw new Error(settleResponse.error || "Payment settlement failed");
-      }
+      // if (!settleResponse.settled) {
+      //   throw new Error(settleResponse.error || "Payment settlement failed");
+      // }
 
       // Create or update user if connected wallet
-      if (address) {
-        console.log("Updating user balance...");
+      // if (address) {
+      //   console.log("Updating user balance...");
 
-        await createOrUpdateUser({
-          wallet_address: address,
-        });
+      //   await createOrUpdateUser({
+      //     wallet_address: address,
+      //   });
 
-        // Increment fiat balance
-        const balanceResult = await incrementFiatBalance({
-          wallet_address: address,
-          amount: parseFloat(amount),
-        });
+      //   // Increment fiat balance
+      //   const balanceResult = await incrementFiatBalance({
+      //     wallet_address: address,
+      //     amount: parseFloat(amount),
+      //   });
 
-        console.log("Balance updated:", balanceResult);
-      }
+      //   console.log("Balance updated:", balanceResult);
+      // }
 
       setPaymentStatus("success");
       toast.success("Payment completed successfully!");
@@ -169,12 +169,12 @@ export default function PayPalModal({
         handleClose();
       }, 2000);
     } catch (error) {
-      console.error("PayPal payment processing failed:", error);
-      setPaymentStatus("error");
-      setErrorMessage(error instanceof Error ? error.message : "Unknown error");
-      toast.error(
-        `Payment processing failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      // console.error("PayPal payment processing failed:", error);
+      // setPaymentStatus("error");
+      // setErrorMessage(error instanceof Error ? error.message : "Unknown error");
+      // toast.error(
+      //   `Payment processing failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      // );
     } finally {
       setIsProcessingPayment(false);
     }

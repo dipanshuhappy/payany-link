@@ -536,11 +536,11 @@ app.get("/test", async (c) => {
             customId: testId,
             amount: {
               currencyCode: "USD",
-              value: 100,
+              value: "1",
               breakdown: {
                 itemTotal: {
                   currencyCode: "USD",
-                  value: 100,
+                  value: "1",
                 },
               },
             },
@@ -550,7 +550,7 @@ app.get("/test", async (c) => {
                 name: "Test Payment Item",
                 unitAmount: {
                   currencyCode: "USD",
-                  value: testAmount,
+                  value: "1",
                 },
                 description: testDescription,
                 quantity: "1",
@@ -575,7 +575,7 @@ app.get("/test", async (c) => {
     return c.json({
       success: true,
       testOrderId: result.id,
-      amount: testAmount,
+      amount: "1",
       currency: "USD",
       status: result.status,
       approvalUrl: result.links?.find((link: any) => link.rel === "approve")

@@ -4,7 +4,7 @@ import "@workspace/ui/globals.css";
 import { Providers } from "@/components/providers";
 import "@rainbow-me/rainbowkit/styles.css";
 import { Toaster } from "@workspace/ui/components/sonner";
-// import { Toaster } from "@m/ui/sonner";
+
 const fontSans = Geist({
   subsets: ["latin"],
   variable: "--font-sans",

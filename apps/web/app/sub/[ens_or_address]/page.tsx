@@ -1,6 +1,5 @@
 "use client";
-// "4c45c2ee-0be4-440b-a0e5-38ddf0fb19e6.7044c53d-24e1-47ee-a7c6-0ebdbe675364";
-// "payany-link";
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
@@ -19,7 +18,14 @@ import { useAccount, useConnect, useEnsAvatar, useEnsName } from "wagmi";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { isAddress } from "viem";
-import { Copy, Check, ExternalLink, Calendar, Database, Wallet } from "lucide-react";
+import {
+  Copy,
+  Check,
+  ExternalLink,
+  Calendar,
+  Database,
+  Wallet,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import PaymentModal from "@/components/PaymentModal";
@@ -33,21 +39,17 @@ export default function EnsOrAddressPage() {
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-  // Show success message if redirected from product creation
   useEffect(() => {
-    if (searchParams.get('created') === 'true') {
+    if (searchParams.get("created") === "true") {
       toast.success("Product created successfully!");
     }
   }, [searchParams]);
 
-  // RainbowKit connect modal
   const { openConnectModal } = useConnectModal();
 
-  // Check if it's an address or ENS name
   const isEthAddress = isAddress(decodedParam);
   const isEnsName = decodedParam.includes(".") && !isEthAddress;
 
-  // ENS hooks
   const { data: ensName, isLoading: ensNameLoading } = useEnsName({
     address: isEthAddress ? (decodedParam as `0x${string}`) : undefined,
     chainId: 1,
@@ -65,7 +67,6 @@ export default function EnsOrAddressPage() {
     keys: ["description", "com.twitter", "com.github", "url"],
   });
 
-  // Extract individual values from the batch response
   const ensDescription = ensTexts?.find((t) => t.key === "description")?.value;
   const ensTwitter = ensTexts?.find((t) => t.key === "com.twitter")?.value;
   const ensGithub = ensTexts?.find((t) => t.key === "com.github")?.value;
@@ -77,20 +78,16 @@ export default function EnsOrAddressPage() {
     });
   const { address } = useAccount();
 
-  // Get wallet connection status from useAccount hook (address is already destructured above)
   const isConnected = !!address;
 
-  // Query our Convex database for additional profile data
   const convexProfile = useQuery(
     api.ensProfiles.getProfileByDomain,
-    ensNameToUse ? { domain_name: ensNameToUse } : "skip"
+    ensNameToUse ? { domain_name: ensNameToUse } : "skip",
   );
-
 
   const displayName = isEnsName ? decodedParam : ensName || decodedParam;
   const displayAddress = isEthAddress ? decodedParam : undefined;
 
-  // Generate Dicebear avatar for addresses
   const getDicebearAvatar = (address: string) => {
     return `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
   };
@@ -146,7 +143,6 @@ export default function EnsOrAddressPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-4 max-w-5xl">
-        {/* Header */}
         <div className="text-center mb-8 pt-8">
           <div className="flex flex-col items-center space-y-4">
             {isLoadingProfile ? (
@@ -183,9 +179,7 @@ export default function EnsOrAddressPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Profile Information */}
           <div className="lg:col-span-2 space-y-4">
-            {/* Description - Show from ENS or Convex database */}
             {!isEthAddress &&
               (textsLoading ? (
                 <Card className="p-6 border-0 bg-card/50">
@@ -217,7 +211,6 @@ export default function EnsOrAddressPage() {
                 )
               ))}
 
-            {/* Enhanced Profile Data from Convex */}
             {convexProfile && (
               <Card className="p-6 border-0 bg-card/50">
                 <h2 className="text-xl font-semibold text-foreground mb-4">
@@ -226,7 +219,10 @@ export default function EnsOrAddressPage() {
                 <div className="space-y-3">
                   {convexProfile.registration_date && (
                     <div className="flex items-center space-x-3">
-                      <Badge variant="outline" className="flex items-center gap-1">
+                      <Badge
+                        variant="outline"
+                        className="flex items-center gap-1"
+                      >
                         <Calendar className="w-3 h-3" />
                         Registered
                       </Badge>
@@ -237,7 +233,10 @@ export default function EnsOrAddressPage() {
                   )}
                   {convexProfile.expiry_date && (
                     <div className="flex items-center space-x-3">
-                      <Badge variant="outline" className="flex items-center gap-1">
+                      <Badge
+                        variant="outline"
+                        className="flex items-center gap-1"
+                      >
                         <Calendar className="w-3 h-3" />
                         Expires
                       </Badge>
@@ -246,27 +245,29 @@ export default function EnsOrAddressPage() {
                       </span>
                     </div>
                   )}
-                  {convexProfile.resolved_address && convexProfile.resolved_address !== displayAddress && (
-                    <div className="flex items-center space-x-3">
-                      <Badge variant="outline">Primary Address</Badge>
-                      <span className="text-sm font-mono text-muted-foreground">
-                        {convexProfile.resolved_address}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => copyToClipboard(convexProfile.resolved_address!)}
-                        className="ml-auto"
-                      >
-                        <Copy className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  )}
+                  {convexProfile.resolved_address &&
+                    convexProfile.resolved_address !== displayAddress && (
+                      <div className="flex items-center space-x-3">
+                        <Badge variant="outline">Primary Address</Badge>
+                        <span className="text-sm font-mono text-muted-foreground">
+                          {convexProfile.resolved_address}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            copyToClipboard(convexProfile.resolved_address!)
+                          }
+                          className="ml-auto"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    )}
                 </div>
               </Card>
             )}
 
-            {/* Social Links - Only show for ENS names */}
             {!isEthAddress &&
               (isLoadingSocials ? (
                 <Card className="p-6 border-0 bg-card/50">
@@ -285,7 +286,11 @@ export default function EnsOrAddressPage() {
                   </div>
                 </Card>
               ) : (
-                (ensTwitter || ensGithub || ensWebsite || convexProfile?.twitter || convexProfile?.github) && (
+                (ensTwitter ||
+                  ensGithub ||
+                  ensWebsite ||
+                  convexProfile?.twitter ||
+                  convexProfile?.github) && (
                   <Card className="p-6 border-0 bg-card/50">
                     <h2 className="text-xl font-semibold text-foreground mb-4">
                       Links
@@ -342,7 +347,6 @@ export default function EnsOrAddressPage() {
                 )
               ))}
 
-            {/* Addresses */}
             <Card className="p-6 border-0 bg-card/50">
               <h2 className="text-xl font-semibold text-foreground mb-4">
                 {isEthAddress ? "Address" : "Addresses"}
@@ -358,7 +362,6 @@ export default function EnsOrAddressPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {/* Show Ethereum address for both scenarios */}
                   {(isEthAddress || displayAddress) && (
                     <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary/20">
                       <div className="flex items-center space-x-3 flex-1 min-w-0">
@@ -392,7 +395,6 @@ export default function EnsOrAddressPage() {
                     </div>
                   )}
 
-                  {/* Show additional addresses for ENS names */}
                   {!isEthAddress && allAddresses && allAddresses.length > 0 && (
                     <>
                       <div className="flex items-center space-x-2 mt-4 mb-2">
@@ -433,21 +435,22 @@ export default function EnsOrAddressPage() {
               )}
             </Card>
 
-            {/* Store Section */}
             <StoreSection
-              ownerAddress={isEthAddress ? decodedParam : allAddresses?.[0]?.address || ""}
+              ownerAddress={
+                isEthAddress ? decodedParam : allAddresses?.[0]?.address || ""
+              }
               displayName={displayName}
               ownerEns={ensNameToUse}
             />
 
-            {/* Store Manager - only visible to owner */}
             <StoreManager
-              ownerAddress={isEthAddress ? decodedParam : allAddresses?.[0]?.address || ""}
+              ownerAddress={
+                isEthAddress ? decodedParam : allAddresses?.[0]?.address || ""
+              }
               displayName={displayName}
             />
           </div>
 
-          {/* Payment Section */}
           <div className="lg:col-span-1">
             <Card className="p-6 sticky top-4 border-0 bg-card/50">
               <h2 className="text-xl font-semibold text-foreground mb-6 text-center">
