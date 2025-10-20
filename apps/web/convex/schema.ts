@@ -130,6 +130,9 @@ export default defineSchema({
       }),
     ),
     theme_color: v.optional(v.string()),
+    preferred_chain: v.optional(v.string()),
+    // Singular settlement token (store's preferred settlement token address or identifier)
+    settlement_token: v.optional(v.string()),
   }).index("by_owner", ["owner_address"]),
 
   users: defineTable({

@@ -386,7 +386,7 @@ export default function EnsOrAddressPage() {
                         className="ml-2 shrink-0 hover:bg-primary/20"
                       >
                         {copiedAddress ===
-                        (isEthAddress ? decodedParam : displayAddress) ? (
+                          (isEthAddress ? decodedParam : displayAddress) ? (
                           <Check className="w-4 h-4 text-green-500" />
                         ) : (
                           <Copy className="w-4 h-4" />
@@ -435,13 +435,13 @@ export default function EnsOrAddressPage() {
               )}
             </Card>
 
-            <StoreSection
+            {/*<StoreSection
               ownerAddress={
                 isEthAddress ? decodedParam : allAddresses?.[0]?.address || ""
               }
               displayName={displayName}
               ownerEns={ensNameToUse}
-            />
+            />*/}
 
             <StoreManager
               ownerAddress={

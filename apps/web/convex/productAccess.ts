@@ -208,6 +208,8 @@ export const updateStoreSettings = mutation({
     owner_address: v.string(),
     store_enabled: v.optional(v.boolean()),
     accepted_tokens: v.optional(v.array(v.string())),
+    // single settlement token (address/string)
+    settlement_token: v.optional(v.string()),
     store_description: v.optional(v.string()),
     social_links: v.optional(
       v.object({
@@ -218,6 +220,8 @@ export const updateStoreSettings = mutation({
     ),
     theme_color: v.optional(v.string()),
     isFiatEnabled: v.optional(v.boolean()),
+    // Optional preferred_chain (e.g. "arbitrum", "ethereum")
+    preferred_chain: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { owner_address, ...updateData } = args;

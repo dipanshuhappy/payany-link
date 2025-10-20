@@ -23,6 +23,8 @@ import { useAccount, useBalance } from "wagmi";
 import { useAlchemyBalances } from "@/hooks/use-alchemy-balances";
 import { erc20Abi, formatUnits, parseUnits } from "viem";
 import { toast } from "sonner";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { readContract } from "wagmi/actions";
 import { config, lifiConfig } from "@/lib/wagmi";
 import { getRoutes, executeRoute } from "@lifi/sdk";
@@ -59,6 +61,27 @@ export default function PaymentModal({
   const [isPaypalModalOpen, setIsPaypalModalOpen] = useState(false);
 
   const { address, chainId: currentChainId } = useAccount();
+
+  // Default PYUSD token address fallback
+  const DEFAULT_TO_TOKEN = "0x46850ad61c2b7d64d08c9c754f45254596696984";
+
+  // Fetch store settings from Convex by owner_address (use recipientAddress when available).
+  // If recipientAddress is not provided we skip the query.
+  const storeSettings = useQuery(
+    api.productAccess.getStoreSettings,
+    recipientAddress ? { owner_address: recipientAddress } : "skip"
+  );
+
+  // Prefer singular settlement_token if present, otherwise fallback to first accepted_token,
+  // otherwise use the default PYUSD address.
+  const toTokenAddressFromStore =
+    (storeSettings as any)?.settlement_token ??
+    (Array.isArray(storeSettings?.accepted_tokens) && storeSettings.accepted_tokens.length
+      ? storeSettings.accepted_tokens[0]
+      : undefined);
+
+  // Final resolved token address to use for routing (lowercase for consistency)
+  const toTokenAddress = (toTokenAddressFromStore || DEFAULT_TO_TOKEN).toLowerCase();
 
   // Get token balances from Alchemy for selected chain
   const {
@@ -116,7 +139,7 @@ export default function PaymentModal({
         toChainId: 42161,
         fromAddress: address,
         toAddress: recipientAddress,
-        toTokenAddress: "0x46850ad61c2b7d64d08c9c754f45254596696984", // PYUSD
+        toTokenAddress: toTokenAddress,
       });
       console.log({ quotes });
       const route = quotes.routes[0];
@@ -203,18 +226,16 @@ export default function PaymentModal({
       {[1, 2, 3].map((step) => (
         <div key={step} className="flex items-center">
           <div
-            className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 ${
-              step <= currentStep
-                ? "bg-primary text-primary-foreground shadow-md"
-                : "bg-muted text-muted-foreground"
-            } ${step === currentStep ? "ring-2 ring-primary/20" : ""}`}
+            className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 ${step <= currentStep
+              ? "bg-primary text-primary-foreground shadow-md"
+              : "bg-muted text-muted-foreground"
+              } ${step === currentStep ? "ring-2 ring-primary/20" : ""}`}
           >
             {step < currentStep ? <Check className="w-4 h-4" /> : step}
           </div>
           <span
-            className={`ml-1 sm:ml-2 text-xs sm:text-sm font-medium hidden sm:inline ${
-              step <= currentStep ? "text-foreground" : "text-muted-foreground"
-            }`}
+            className={`ml-1 sm:ml-2 text-xs sm:text-sm font-medium hidden sm:inline ${step <= currentStep ? "text-foreground" : "text-muted-foreground"
+              }`}
           >
             {step === 1 && "Chain"}
             {step === 2 && "Token"}
@@ -222,9 +243,8 @@ export default function PaymentModal({
           </span>
           {step < 3 && (
             <div
-              className={`mx-1 sm:mx-2 w-8 sm:w-12 h-px ${
-                step < currentStep ? "bg-primary" : "bg-border"
-              } transition-colors duration-200`}
+              className={`mx-1 sm:mx-2 w-8 sm:w-12 h-px ${step < currentStep ? "bg-primary" : "bg-border"
+                } transition-colors duration-200`}
             />
           )}
         </div>
@@ -265,11 +285,10 @@ export default function PaymentModal({
                 <div className="grid grid-cols-1 gap-4">
                   <button
                     onClick={() => setPaymentMethod("crypto")}
-                    className={`p-4 rounded-lg border-2 transition-all duration-200 text-left ${
-                      paymentMethod === "crypto"
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50"
-                    }`}
+                    className={`p-4 rounded-lg border-2 transition-all duration-200 text-left ${paymentMethod === "crypto"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                      }`}
                   >
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
@@ -286,7 +305,7 @@ export default function PaymentModal({
                     </div>
                   </button>
 
-                  <button
+                  {/*<button
                     onClick={handlePayPalSelect}
                     className="p-4 rounded-lg border-2 transition-all duration-200 text-left border-border hover:border-primary/50"
                   >
@@ -301,7 +320,7 @@ export default function PaymentModal({
                         </p>
                       </div>
                     </div>
-                  </button>
+                  </button>*/}
                 </div>
 
                 {paymentMethod === "crypto" && (
@@ -367,7 +386,7 @@ export default function PaymentModal({
                     </Badge>
                   </h4>
                   <div className="text-sm text-muted-foreground">
-                    <p>Destination: PYUSD on Arbitrum</p>
+
                     <p>Recipient: {recipient}</p>
                     {recipientAddress && (
                       <p>
@@ -433,7 +452,7 @@ export default function PaymentModal({
       </DialogContent>
 
       {/* PayPal Modal */}
-      <PayPalModal
+      {/*<PayPalModal
         isOpen={isPaypalModalOpen}
         onClose={() => setIsPaypalModalOpen(false)}
         recipient={recipient}
@@ -441,7 +460,7 @@ export default function PaymentModal({
         fixedAmount={fixedAmount}
         productName={productName}
         mode={mode}
-      />
+      />*/}
     </Dialog>
   );
 }
